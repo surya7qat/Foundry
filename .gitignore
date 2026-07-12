@@ -1,0 +1,28 @@
+# Virtual Environment
+anti/backend/venv/
+venv/
+
+# Node modules
+anti/frontend/node_modules/
+node_modules/
+
+# Local configuration
+anti/backend/.env
+.env
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE configurations
+.vscode/
+.idea/
+
+# Database files
+anti/backend/db.sqlite3
+db.sqlite3
+
+# Frontend build outputs
+anti/frontend/dist/
+dist/

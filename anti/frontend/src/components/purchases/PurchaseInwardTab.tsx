@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../../api';
 import { useToast } from '../../contexts/ToastContext';
 import SearchableSelect from '../common/SearchableSelect';
-import { Plus, Trash2, Eye, X, Edit2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Trash2, Eye, X, Edit2, ChevronLeft, ChevronRight, History } from 'lucide-react';
 import '../master/MasterStyles.css';
 
 interface InwardItem {
@@ -33,6 +33,10 @@ interface PurchaseInward {
     remarks: string;
     status: string;
     items: InwardItem[];
+    created_at?: string;
+    created_by?: string;
+    updated_at?: string;
+    updated_by?: string;
 }
 
 interface Supplier { id: number; name: string; is_active: boolean; }
@@ -50,6 +54,7 @@ const PurchaseInwardTab: React.FC = () => {
         }
     };
     const [inwards, setInwards] = useState<PurchaseInward[]>([]);
+    const [auditLogData, setAuditLogData] = useState<{ created_by?: string; created_at?: string; updated_by?: string; updated_at?: string } | null>(null);
     const [suppliers, setSuppliers] = useState<Supplier[]>([]);
     const [materials, setMaterials] = useState<RawMaterial[]>([]);
     
@@ -430,7 +435,7 @@ const PurchaseInwardTab: React.FC = () => {
                                         <th>Total Value (₹)</th>
                                         <th>Status</th>
                                         <th>Remarks</th>
-                                        <th style={{textAlign: 'center'}}>Actions</th>
+                                        <th style={{textAlign: 'center', width: '120px'}}>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -461,13 +466,18 @@ const PurchaseInwardTab: React.FC = () => {
                                             </td>
                                             <td style={{ color: '#ccc' }} title={inward.remarks}>{inward.remarks}</td>
                                             <td style={{textAlign: 'center'}}>
-                                                <div style={{display: 'flex', gap: '8px', justifyContent: 'center'}}>
+                                                <div style={{display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center'}}>
                                                     <button className="action-icon-btn view-btn" onClick={() => { setViewingInward(inward); setViewMode('view'); }} title="View Details">
                                                         <Eye size={16} />
                                                     </button>
                                                     {inward.status === 'DRAFT' && (
                                                         <button type="button" className="action-icon-btn edit-btn" onClick={() => handleEditClick(inward)} title="Edit Inward" style={{ background: 'rgba(251,191,36,0.15)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.3)' }}>
                                                             <Edit2 size={16} />
+                                                        </button>
+                                                    )}
+                                                    {sessionStorage.getItem('is_superuser') === 'true' && (
+                                                        <button type="button" className="action-icon-btn history-btn" onClick={() => setAuditLogData({ created_by: inward.created_by, created_at: inward.created_at, updated_by: inward.updated_by, updated_at: inward.updated_at })} title="Audit Log" style={{ background: 'rgba(59,130,246,0.15)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.3)' }}>
+                                                            <History size={16} />
                                                         </button>
                                                     )}
                                                 </div>
@@ -526,6 +536,11 @@ const PurchaseInwardTab: React.FC = () => {
                                         {inward.status === 'DRAFT' && (
                                             <button type="button" className="action-icon-btn edit-btn" onClick={() => handleEditClick(inward)} title="Edit Inward" style={{ background: 'rgba(251,191,36,0.15)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.3)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                                 <Edit2 size={14} /> Edit
+                                            </button>
+                                        )}
+                                        {sessionStorage.getItem('is_superuser') === 'true' && (
+                                            <button type="button" className="action-icon-btn history-btn" onClick={() => setAuditLogData({ created_by: inward.created_by, created_at: inward.created_at, updated_by: inward.updated_by, updated_at: inward.updated_at })} title="Audit Log" style={{ background: 'rgba(59,130,246,0.15)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.3)', display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 12px', borderRadius: '4px', fontSize: '0.85rem' }}>
+                                                <History size={16} /> Log
                                             </button>
                                         )}
                                     </div>
@@ -878,6 +893,55 @@ const PurchaseInwardTab: React.FC = () => {
                             <strong style={{ color: '#aaa' }}>Total Amount:</strong>
                             <strong style={{ color: 'var(--color-molten-yellow)', fontSize: '1.1rem' }}>₹ {calculateTotal(viewingInward.items).toFixed(2)}</strong>
                         </div>
+                    </div>
+                </div>
+            )}
+            {auditLogData && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0, left: 0, right: 0, bottom: 0,
+                    background: 'rgba(0,0,0,0.6)',
+                    backdropFilter: 'blur(4px)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 2000,
+                    animation: 'fadeIn 0.2s ease-out'
+                }}>
+                    <div className="glass-panel" style={{
+                        width: '90%',
+                        maxWidth: '400px',
+                        padding: '1.5rem',
+                        position: 'relative',
+                        border: '1px solid rgba(255,107,53,0.3)',
+                        boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+                    }}>
+                        <h3 style={{ margin: '0 0 1.25rem 0', color: 'var(--color-molten-yellow)', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '8px', fontSize: '1.1rem' }}>
+                            Record Audit Log
+                        </h3>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.9rem', color: '#fff' }}>
+                            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                <div style={{ color: 'var(--color-accent)', fontWeight: 600, fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: '4px' }}>Created By</div>
+                                <div style={{ fontSize: '1rem', fontWeight: 500 }}>{auditLogData.created_by || 'System'}</div>
+                                <div style={{ color: '#aaa', fontSize: '0.8rem', marginTop: '2px' }}>{auditLogData.created_at ? new Date(auditLogData.created_at).toLocaleString() : '-'}</div>
+                            </div>
+                            
+                            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                <div style={{ color: 'var(--color-accent)', fontWeight: 600, fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: '4px' }}>Last Edited By</div>
+                                <div style={{ fontSize: '1rem', fontWeight: 500 }}>{auditLogData.updated_by || 'System'}</div>
+                                <div style={{ color: '#aaa', fontSize: '0.8rem', marginTop: '2px' }}>{auditLogData.updated_at ? new Date(auditLogData.updated_at).toLocaleString() : '-'}</div>
+                            </div>
+                        </div>
+
+                        <button 
+                            type="button" 
+                            className="btn-secondary" 
+                            onClick={() => setAuditLogData(null)}
+                            style={{ marginTop: '1.5rem', width: '100%', height: '38px', minHeight: 'auto', margin: '1.5rem 0 0 0' }}
+                        >
+                            Close
+                        </button>
                     </div>
                 </div>
             )}

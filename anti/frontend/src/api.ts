@@ -41,6 +41,9 @@ api.interceptors.response.use(
     },
     (error) => {
         window.dispatchEvent(new Event('api-load-end'));
+        if (!error.response || error.code === 'ERR_NETWORK') {
+            window.dispatchEvent(new Event('api-network-error'));
+        }
         if (error.response?.status === 401) {
             // In a real app, attempt to use refresh_token here
             sessionStorage.removeItem('access_token');

@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 import api from '../api';
 import './Login.css';
 import foundryBg from '../assets/foundry_background.png';
@@ -23,6 +24,7 @@ function Login() {
     rememberMe: false
   });
 
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
@@ -67,6 +69,10 @@ function Login() {
       }
       if (response.data.api_endpoint) {
           sessionStorage.setItem('api_endpoint', response.data.api_endpoint);
+      }
+      sessionStorage.setItem('is_superuser', response.data.is_superuser ? 'true' : 'false');
+      if (response.data.role_permissions) {
+          sessionStorage.setItem('role_permissions', JSON.stringify(response.data.role_permissions));
       }
       console.log('Login successful');
       navigate('/dashboard');
@@ -128,6 +134,8 @@ function Login() {
                 onBlur={() => setFocusedField(null)}
                 placeholder=" "
                 className="form-input"
+                autoComplete="off"
+                spellCheck="false"
               />
               <label htmlFor="username" className="form-label">Username</label>
               <div className="input-border"></div>
@@ -139,7 +147,7 @@ function Login() {
           <div className="form-group">
             <div className={`input-wrapper ${focusedField === 'password' ? 'focused' : ''} ${errors.password ? 'error' : ''}`}>
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 id="password"
                 name="password"
                 value={formData.password}
@@ -147,9 +155,20 @@ function Login() {
                 onFocus={() => setFocusedField('password')}
                 onBlur={() => setFocusedField(null)}
                 placeholder=" "
-                className="form-input"
+                className="form-input password-input"
+                autoComplete="off"
+                spellCheck="false"
               />
               <label htmlFor="password" className="form-label">Password</label>
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={() => setShowPassword(!showPassword)}
+                tabIndex={-1}
+                title={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
               <div className="input-border"></div>
             </div>
             {errors.password && <span className="error-message">{errors.password}</span>}

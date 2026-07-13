@@ -50,5 +50,44 @@ class Client(models.Model):
         except Exception as e:
             print(f"Failed to provision DB for {self.name}: {e}")
 
+class Role(models.Model):
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='roles')
+    name = models.CharField(max_length=100)
+    # Checkboxes for menus
+    can_access_dashboard = models.BooleanField(default=True)
+    can_access_supplier_master = models.BooleanField(default=False)
+    can_access_raw_material_master = models.BooleanField(default=False)
+    can_access_customer_master = models.BooleanField(default=False)
+    can_access_pattern_material_master = models.BooleanField(default=False)
+    can_access_product_master = models.BooleanField(default=False)
+    can_access_core_box_master = models.BooleanField(default=False)
+    can_access_pattern_master = models.BooleanField(default=False)
+    can_access_purchase_inward = models.BooleanField(default=False)
+    can_access_purchase_rejection = models.BooleanField(default=False)
+    can_access_purchase_return = models.BooleanField(default=False)
+    can_access_material_stock = models.BooleanField(default=False)
+    can_access_material_stock_log = models.BooleanField(default=False)
+    can_access_product_stock = models.BooleanField(default=False)
+    can_access_product_stock_log = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('client', 'name')
+
+    def __str__(self):
+        return f"{self.name} ({self.client.name})"
+
+class UserAccessPermission(models.Model):
+    client = models.OneToOneField(Client, on_delete=models.CASCADE, related_name='access_permission')
+    show_customer_to_all_departments = models.BooleanField(default=True)
+    show_supplier_to_all_departments = models.BooleanField(default=True)
+    supplier_to_show = models.CharField(max_length=50, null=True, blank=True)
+
+    def __str__(self):
+        return f"Permissions for {self.client.name}"
+
 class CustomUser(AbstractUser):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True, related_name='users')
+    role = models.ForeignKey(Role, on_delete=models.SET_NULL, null=True, blank=True, related_name='users')
+    show_customer_to_all_departments = models.BooleanField(default=True)
+    show_supplier_to_all_departments = models.BooleanField(default=True)
+

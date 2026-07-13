@@ -48,14 +48,26 @@
   width: 100%;
   max-width: 450px;
   padding: var(--spacing-lg);
-  border-radius: var(--radius-xl);
-  animation: fadeIn 0.6s ease-out;
+  border-radius: 20px;
+  background: rgba(15, 15, 15, 0.65) !important;
+  border: 1px solid rgba(255, 107, 53, 0.25);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 25px rgba(255, 107, 53, 0.1);
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+  animation: fadeIn 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.login-card:hover {
+  border-color: rgba(255, 107, 53, 0.45);
+  box-shadow: 0 25px 55px rgba(0, 0, 0, 0.7), 0 0 40px rgba(255, 107, 53, 0.2);
+  transform: translateY(-2px);
 }
 
 /* Header */
 .login-header {
   text-align: center;
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
 }
 
 .login-logo {
@@ -63,30 +75,36 @@
   align-items: center;
   justify-content: center;
   gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
 }
 
 .logo-icon {
-  width: 60px;
-  height: 60px;
+  width: 64px;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--gradient-molten);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-glow);
+  border-radius: 16px;
+  box-shadow: 0 0 20px rgba(255, 107, 53, 0.5);
   animation: pulse-glow 3s infinite;
+  transition: transform 0.3s ease;
+}
+
+.logo-icon:hover {
+  transform: rotate(10deg) scale(1.05);
 }
 
 .icon-spark {
-  font-size: 2rem;
-  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
+  font-size: 2.2rem;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
 }
 
 .login-title {
   font-family: 'Orbitron', monospace;
-  font-size: 2.5rem;
-  font-weight: 800;
+  font-size: 2.8rem;
+  font-weight: 900;
+  letter-spacing: 1px;
   background: var(--gradient-molten);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -96,9 +114,12 @@
 
 .login-subtitle {
   color: var(--color-text-secondary);
-  font-size: 0.95rem;
+  font-size: 1rem;
   margin: 0;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
+  font-weight: 500;
+  text-transform: uppercase;
+  opacity: 0.8;
 }
 
 /* Form */
@@ -119,6 +140,11 @@
 .input-wrapper {
   position: relative;
   width: 100%;
+  transition: transform var(--transition-normal);
+}
+
+.input-wrapper.focused {
+  transform: translateY(-2px);
 }
 
 .form-input {
@@ -127,7 +153,7 @@
   background: rgba(42, 42, 42, 0.5);
   border: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-md);
-  color: var(--color-text-primary);
+  color: #ffffff !important;
   font-size: 1rem;
   transition: all var(--transition-normal);
 }
@@ -141,6 +167,43 @@
 
 .input-wrapper.error .form-input {
   border-color: var(--color-error);
+}
+
+.form-input.password-input {
+  padding-right: 3rem;
+}
+
+/* Hide Microsoft Edge / IE native password reveal and clear buttons */
+.form-input::-ms-reveal,
+.form-input::-ms-clear {
+  display: none !important;
+  width: 0;
+  height: 0;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 50%;
+  z-index: 10;
+  transition: all var(--transition-fast);
+  outline: none;
+  margin-top: 2px;
+}
+
+.password-toggle-btn:hover {
+  color: var(--color-accent);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 /* Floating Label */

@@ -8,10 +8,26 @@ django.setup()
 from inventory.models import Supplier, RawMaterial, Customer, PatternMaterial, Product, CoreBox, Pattern
 
 def clean_and_seed_50():
+    from core.middleware import tenant_state
+    tenant_state.db = 'surya_castings'
     db = 'surya_castings'
     print(f"Cleaning existing records in database [{db}]...")
     
     # Delete dependent tables first to prevent ForeignKey violations
+    from inventory.models import ProductStock, ProductStockCorrectionLog, MaterialStock, MaterialStockCorrectionLog
+    from purchases.models import PurchaseReturnItem, PurchaseReturn, PurchaseRejectionItem, PurchaseRejection, PurchaseInwardItem, PurchaseInward
+    
+    PurchaseReturnItem.objects.using(db).all().delete()
+    PurchaseReturn.objects.using(db).all().delete()
+    PurchaseRejectionItem.objects.using(db).all().delete()
+    PurchaseRejection.objects.using(db).all().delete()
+    PurchaseInwardItem.objects.using(db).all().delete()
+    PurchaseInward.objects.using(db).all().delete()
+    
+    ProductStockCorrectionLog.objects.using(db).all().delete()
+    ProductStock.objects.using(db).all().delete()
+    MaterialStockCorrectionLog.objects.using(db).all().delete()
+    MaterialStock.objects.using(db).all().delete()
     Pattern.objects.using(db).all().delete()
     CoreBox.objects.using(db).all().delete()
     Product.objects.using(db).all().delete()
@@ -143,6 +159,20 @@ def clean_and_seed_50():
         ))
     Pattern.objects.using(db).bulk_create(patterns)
     print("Seeded 50 Patterns!")
+
+    # 8. Product Stocks
+    product_stocks = []
+    for i in range(1, 51):
+        prod = db_products[(i-1) % len(db_products)]
+        product_stocks.append(ProductStock(
+            customer=prod.customer,
+            product=prod,
+            batch_no=f"B-PROD-{i:03d}",
+            quantity=100.0 * i
+        ))
+    ProductStock.objects.using(db).bulk_create(product_stocks)
+    print("Seeded 50 Product Stocks!")
+
     print("\nSeeding completed successfully! Exactly 50 data records added to each master.")
 
 if __name__ == '__main__':

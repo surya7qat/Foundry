@@ -6,6 +6,7 @@ from .models import (
     PurchaseReturn, PurchaseReturnItem
 )
 from inventory.models import Supplier, RawMaterial
+from inventory.serializers import mask_supplier_name
 
 # Inward Item Serializer
 class PurchaseInwardItemSerializer(serializers.ModelSerializer):
@@ -29,15 +30,19 @@ class PurchaseInwardItemSerializer(serializers.ModelSerializer):
 # Inward Serializer
 class PurchaseInwardSerializer(serializers.ModelSerializer):
     items = PurchaseInwardItemSerializer(many=True)
-    supplier_name = serializers.CharField(source='supplier.name', read_only=True)
+    supplier_name = serializers.SerializerMethodField()
 
     class Meta:
         model = PurchaseInward
         fields = [
             'id', 'inward_number', 'supplier', 'supplier_name', 'inward_date',
-            'bill_no', 'bill_date', 'remarks', 'status', 'items', 'created_at', 'created_by'
+            'bill_no', 'bill_date', 'remarks', 'status', 'items', 'created_at', 'created_by', 'updated_at', 'updated_by'
         ]
-        read_only_fields = ['inward_number', 'created_at', 'created_by']
+        read_only_fields = ['inward_number', 'created_at', 'created_by', 'updated_at', 'updated_by']
+
+    def get_supplier_name(self, obj):
+        request = self.context.get('request')
+        return mask_supplier_name(request, obj.supplier, obj.supplier.name)
 
     def create(self, validated_data):
         items_data = validated_data.pop('items')
@@ -118,13 +123,19 @@ class PurchaseRejectionItemSerializer(serializers.ModelSerializer):
 # Rejection Serializer
 class PurchaseRejectionSerializer(serializers.ModelSerializer):
     items = PurchaseRejectionItemSerializer(many=True)
-    supplier_name = serializers.CharField(source='purchase_inward.supplier.name', read_only=True)
+    supplier_name = serializers.SerializerMethodField()
     inward_number = serializers.CharField(source='purchase_inward.inward_number', read_only=True)
 
     class Meta:
         model = PurchaseRejection
-        fields = ['id', 'rejection_number', 'rejection_date', 'purchase_inward', 'inward_number', 'supplier_name', 'remarks', 'items', 'created_at', 'created_by']
-        read_only_fields = ['rejection_number', 'created_at', 'created_by']
+        fields = ['id', 'rejection_number', 'rejection_date', 'purchase_inward', 'inward_number', 'supplier_name', 'remarks', 'items', 'created_at', 'created_by', 'updated_at', 'updated_by']
+        read_only_fields = ['rejection_number', 'created_at', 'created_by', 'updated_at', 'updated_by']
+
+    def get_supplier_name(self, obj):
+        request = self.context.get('request')
+        if obj.purchase_inward and obj.purchase_inward.supplier:
+            return mask_supplier_name(request, obj.purchase_inward.supplier, obj.purchase_inward.supplier.name)
+        return None
 
     def validate(self, data):
         inward = data['purchase_inward']
@@ -204,13 +215,19 @@ class PurchaseReturnItemSerializer(serializers.ModelSerializer):
 # Return Serializer
 class PurchaseReturnSerializer(serializers.ModelSerializer):
     items = PurchaseReturnItemSerializer(many=True)
-    supplier_name = serializers.CharField(source='purchase_inward.supplier.name', read_only=True)
+    supplier_name = serializers.SerializerMethodField()
     inward_number = serializers.CharField(source='purchase_inward.inward_number', read_only=True)
 
     class Meta:
         model = PurchaseReturn
-        fields = ['id', 'return_number', 'return_date', 'purchase_inward', 'inward_number', 'supplier_name', 'remarks', 'items', 'created_at', 'created_by']
-        read_only_fields = ['return_number', 'created_at', 'created_by']
+        fields = ['id', 'return_number', 'return_date', 'purchase_inward', 'inward_number', 'supplier_name', 'remarks', 'items', 'created_at', 'created_by', 'updated_at', 'updated_by']
+        read_only_fields = ['return_number', 'created_at', 'created_by', 'updated_at', 'updated_by']
+
+    def get_supplier_name(self, obj):
+        request = self.context.get('request')
+        if obj.purchase_inward and obj.purchase_inward.supplier:
+            return mask_supplier_name(request, obj.purchase_inward.supplier, obj.purchase_inward.supplier.name)
+        return None
 
     def validate(self, data):
         inward = data['purchase_inward']

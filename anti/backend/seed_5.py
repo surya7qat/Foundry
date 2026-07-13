@@ -10,6 +10,8 @@ from inventory.models import Supplier, RawMaterial, Customer, PatternMaterial, P
 from purchases.models import PurchaseInward, PurchaseInwardItem, PurchaseRejection, PurchaseRejectionItem, PurchaseReturn, PurchaseReturnItem
 
 def clean_and_seed_5():
+    from core.middleware import tenant_state
+    tenant_state.db = 'surya_castings'
     db = 'surya_castings'
     print(f"Cleaning existing transaction and master records in database [{db}]...")
     
@@ -293,6 +295,70 @@ def clean_and_seed_5():
     for item in return_items:
         item.save(using=db)
     print("Seeded Purchase Return Items!")
+
+    # Seed Product Stock
+    from inventory.models import ProductStock
+    product_stocks = []
+    for idx, prod in enumerate(db_products):
+        product_stocks.append(ProductStock(
+            customer=prod.customer,
+            product=prod,
+            batch_no=f"B-PROD-{idx+1:03d}",
+            quantity=100.0 * (idx + 1)
+        ))
+    for p_stock in product_stocks:
+        p_stock.save(using=db)
+    print("Seeded Product Stocks!")
+
+    # Central database roles and users seeding
+    from accounts.models import Client, Role, CustomUser
+    client = Client.objects.filter(name="Surya Castings").first()
+    if client:
+        print("Cleaning and seeding 5 Users and Roles in central database...")
+        # Clean existing seeded roles/users
+        CustomUser.objects.filter(username__in=[f"surya{i}" for i in range(1, 6)]).delete()
+        Role.objects.filter(name__in=[f"Seeded Role {i}" for i in range(1, 6)], client=client).delete()
+
+        # 5 Roles
+        seeded_roles = []
+        for i in range(1, 6):
+            role = Role.objects.create(
+                name=f"Seeded Role {i}",
+                client=client,
+                can_access_dashboard=True,
+                can_access_supplier_master=(i % 2 == 1),
+                can_access_raw_material_master=(i % 2 == 0),
+                can_access_customer_master=(i % 3 == 0),
+                can_access_pattern_material_master=(i % 3 == 1),
+                can_access_product_master=(i % 3 == 2),
+                can_access_core_box_master=True,
+                can_access_pattern_master=False,
+                can_access_purchase_inward=True,
+                can_access_purchase_rejection=False,
+                can_access_purchase_return=True,
+                can_access_material_stock=True,
+                can_access_material_stock_log=True,
+                can_access_product_stock=True,
+                can_access_product_stock_log=True
+            )
+            seeded_roles.append(role)
+        print("Seeded 5 Roles!")
+
+        # 5 Users
+        for i in range(1, 6):
+            user = CustomUser.objects.create(
+                username=f"surya{i}",
+                email=f"surya{i}@castings.com",
+                client=client,
+                role=seeded_roles[i-1],
+                is_active=True,
+                is_superuser=False,
+                show_customer_to_all_departments=(i % 2 == 1),
+                show_supplier_to_all_departments=(i % 2 == 0)
+            )
+            user.set_password("Surya@123")
+            user.save()
+        print("Seeded 5 Users (surya1 to surya5) with password Surya@123!")
 
     print("\nSeeding completed successfully! Exactly 5 data records added to each master and transaction type.")
 

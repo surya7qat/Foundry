@@ -26,10 +26,21 @@ class TenantMiddleware:
                 
                 print(f"--- [TenantMiddleware] Intercepted JWT Username: {username} ---")
                 
-                # Dynamic Routing Filter
-                if username and username.lower() == 'surya':
-                    tenant_state.db = 'surya_castings'
-                    print("--- [TenantMiddleware] Route Switch: surya_castings ---")
+                if username:
+                    from django.contrib.auth import get_user_model
+                    User = get_user_model()
+                    try:
+                        user_obj = User.objects.using('default').select_related('client').get(username=username)
+                        if user_obj.client and user_obj.client.db_name:
+                            tenant_state.db = user_obj.client.db_name
+                            print(f"--- [TenantMiddleware] Route Switch to Client DB: {tenant_state.db} ---")
+                        elif username.lower() == 'surya':
+                            tenant_state.db = 'surya_castings'
+                            print("--- [TenantMiddleware] Route Switch (Fallback): surya_castings ---")
+                    except User.DoesNotExist:
+                        if username.lower() == 'surya':
+                            tenant_state.db = 'surya_castings'
+                            print("--- [TenantMiddleware] Route Switch (Superuser Fallback): surya_castings ---")
                     
             except Exception as e:
                 print(f"--- [TenantMiddleware] JWT Decode Error: {str(e)} ---")

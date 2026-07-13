@@ -5,16 +5,20 @@ from core.middleware import tenant_state
 class BaseModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.CharField(max_length=150, blank=True, default='System', editable=False)
+    updated_at = models.DateTimeField(auto_now=True)
+    updated_by = models.CharField(max_length=150, blank=True, default='System', editable=False)
     is_active = models.BooleanField(default=True)
 
     class Meta:
         abstract = True
 
     def save(self, *args, **kwargs):
+        current_user = getattr(tenant_state, 'username', 'System')
         if not self.pk:
-            current_user = getattr(tenant_state, 'username', 'System')
             if current_user:
                 self.created_by = current_user
+        if current_user:
+            self.updated_by = current_user
         super().save(*args, **kwargs)
 
 class Supplier(BaseModel):
@@ -139,5 +143,52 @@ class Pattern(BaseModel):
 
     def __str__(self):
         return f"{self.pattern_id} - {self.customer.name}"
+
+class MaterialStock(BaseModel):
+    raw_material = models.ForeignKey(RawMaterial, on_delete=models.RESTRICT, related_name='material_stocks')
+    batch_no = models.CharField(max_length=50)
+    expiry_date = models.DateField(null=True, blank=True)
+    quantity = models.FloatField()
+
+    class Meta:
+        unique_together = ('raw_material', 'batch_no', 'expiry_date')
+
+    def __str__(self):
+        return f"{self.raw_material.name} - Batch: {self.batch_no} ({self.quantity} {self.raw_material.unit})"
+
+class MaterialStockCorrectionLog(BaseModel):
+    raw_material = models.ForeignKey(RawMaterial, on_delete=models.RESTRICT, related_name='material_correction_logs')
+    batch_no = models.CharField(max_length=50)
+    expiry_date = models.DateField(null=True, blank=True)
+    quantity = models.FloatField()  # Original quantity
+    corrected_quantity = models.FloatField()  # New corrected quantity
+    reason = models.TextField()
+
+    def __str__(self):
+        return f"Correction for {self.raw_material.name} Batch {self.batch_no} from {self.quantity} to {self.corrected_quantity}"
+
+class ProductStock(BaseModel):
+    customer = models.ForeignKey(Customer, on_delete=models.RESTRICT, related_name='product_stocks')
+    product = models.ForeignKey(Product, on_delete=models.RESTRICT, related_name='product_stocks')
+    batch_no = models.CharField(max_length=50)
+    quantity = models.FloatField()
+
+    class Meta:
+        unique_together = ('customer', 'product', 'batch_no')
+
+    def __str__(self):
+        return f"{self.product.name} - Batch: {self.batch_no} ({self.quantity} Nos)"
+
+class ProductStockCorrectionLog(BaseModel):
+    customer = models.ForeignKey(Customer, on_delete=models.RESTRICT, related_name='product_correction_logs')
+    product = models.ForeignKey(Product, on_delete=models.RESTRICT, related_name='product_correction_logs')
+    batch_no = models.CharField(max_length=50)
+    quantity = models.FloatField()  # Original quantity
+    corrected_quantity = models.FloatField()  # New corrected quantity
+    reason = models.TextField()
+
+    def __str__(self):
+        return f"Correction for {self.product.name} Batch {self.batch_no} from {self.quantity} to {self.corrected_quantity}"
+
 
 

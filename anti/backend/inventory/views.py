@@ -4,8 +4,15 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q
-from .models import Supplier, RawMaterial, Customer, PatternMaterial, Product, CoreBox, Pattern
-from .serializers import SupplierSerializer, RawMaterialSerializer, CustomerSerializer, PatternMaterialSerializer, ProductSerializer, CoreBoxSerializer, PatternSerializer
+from .models import (
+    Supplier, RawMaterial, Customer, PatternMaterial, Product, CoreBox, Pattern,
+    MaterialStock, MaterialStockCorrectionLog, ProductStock, ProductStockCorrectionLog
+)
+from .serializers import (
+    SupplierSerializer, RawMaterialSerializer, CustomerSerializer, PatternMaterialSerializer, ProductSerializer, CoreBoxSerializer, PatternSerializer,
+    MaterialStockSerializer, MaterialStockCorrectionLogSerializer, ProductStockSerializer, ProductStockCorrectionLogSerializer
+)
+from rest_framework.response import Response
 
 class DynamicResultSetPagination(PageNumberPagination):
     page_size_query_param = 'page_size'
@@ -309,3 +316,197 @@ class PatternViewSet(viewsets.ModelViewSet):
                     
                 qs = qs.filter(pattern_filter)
         return qs
+
+class MaterialStockViewSet(viewsets.ModelViewSet):
+    pagination_class = DynamicResultSetPagination
+    queryset = MaterialStock.objects.all().order_by('-id')
+    serializer_class = MaterialStockSerializer
+
+    def get_queryset(self):
+        # Sync stock once if empty to ingest pre-existing completions
+        if not MaterialStock.objects.exists():
+            self.run_initial_sync()
+
+        qs = MaterialStock.objects.all().order_by('-id')
+        search = self.request.query_params.get('search', '').strip()
+        if search:
+            qs = qs.filter(
+                Q(raw_material__name__icontains=search) |
+                Q(raw_material__code__icontains=search) |
+                Q(batch_no__icontains=search)
+            )
+        return qs
+
+    def run_initial_sync(self):
+        from django.db.models import Sum
+        from purchases.models import PurchaseInwardItem, PurchaseRejectionItem, PurchaseReturnItem
+        
+        items = PurchaseInwardItem.objects.filter(purchase_inward__status='COMPLETED')
+        
+        # Clear existing to guarantee fresh grouping calculation
+        MaterialStock.objects.all().delete()
+        
+        grouped_items = {}
+        for item in items:
+            raw_material = item.raw_material
+            batch_no = item.batch or ''
+            expiry_date = item.expiry_date
+            
+            key = (raw_material.id, batch_no, expiry_date)
+            if key not in grouped_items:
+                grouped_items[key] = {
+                    'raw_material': raw_material,
+                    'batch_no': batch_no,
+                    'expiry_date': expiry_date,
+                    'quantity': 0.0
+                }
+            
+            rejected = PurchaseRejectionItem.objects.filter(
+                purchase_inward_item=item
+            ).aggregate(total=Sum('rejected_quantity'))['total'] or 0.0
+
+            returned = PurchaseReturnItem.objects.filter(
+                purchase_inward_item=item
+            ).aggregate(total=Sum('returned_quantity'))['total'] or 0.0
+            
+            net_qty = item.quantity - rejected - returned
+            grouped_items[key]['quantity'] += net_qty
+            
+        for key, data in grouped_items.items():
+            if data['quantity'] > 0:
+                # Try to retrieve existing record in surya_castings
+                stock = MaterialStock.objects.filter(
+                    raw_material=data['raw_material'],
+                    batch_no=data['batch_no'],
+                    expiry_date=data['expiry_date']
+                ).first()
+                
+                if stock:
+                    stock.quantity = data['quantity']
+                    stock.save()
+                else:
+                    MaterialStock.objects.create(
+                        raw_material=data['raw_material'],
+                        batch_no=data['batch_no'],
+                        expiry_date=data['expiry_date'],
+                        quantity=data['quantity']
+                    )
+
+    @action(detail=True, methods=['post'])
+    def correct_stock(self, request, pk=None):
+        stock = self.get_object()
+        corrected_quantity = request.data.get('corrected_quantity')
+        reason = request.data.get('reason')
+
+        if corrected_quantity is None or reason is None:
+            raise ValidationError("corrected_quantity and reason are required.")
+
+        try:
+            corrected_quantity = float(corrected_quantity)
+        except ValueError:
+            raise ValidationError("corrected_quantity must be a valid float.")
+
+        original_quantity = stock.quantity
+        
+        # Log correction
+        MaterialStockCorrectionLog.objects.create(
+            raw_material=stock.raw_material,
+            batch_no=stock.batch_no,
+            expiry_date=stock.expiry_date,
+            quantity=original_quantity,
+            corrected_quantity=corrected_quantity,
+            reason=reason
+        )
+
+        # Update stock
+        stock.quantity = corrected_quantity
+        stock.save()
+
+        return Response(MaterialStockSerializer(stock, context={'request': request}).data)
+
+class MaterialStockCorrectionLogViewSet(viewsets.ReadOnlyModelViewSet):
+    pagination_class = DynamicResultSetPagination
+    queryset = MaterialStockCorrectionLog.objects.all().order_by('-id')
+    serializer_class = MaterialStockCorrectionLogSerializer
+
+    def get_queryset(self):
+        qs = MaterialStockCorrectionLog.objects.all().order_by('-id')
+        search = self.request.query_params.get('search', '').strip()
+        if search:
+            qs = qs.filter(
+                Q(raw_material__name__icontains=search) |
+                Q(raw_material__code__icontains=search) |
+                Q(batch_no__icontains=search) |
+                Q(reason__icontains=search)
+            )
+        return qs
+
+class ProductStockViewSet(viewsets.ModelViewSet):
+    pagination_class = DynamicResultSetPagination
+    queryset = ProductStock.objects.all().order_by('-id')
+    serializer_class = ProductStockSerializer
+
+    def get_queryset(self):
+        qs = ProductStock.objects.all().order_by('-id')
+        search = self.request.query_params.get('search', '').strip()
+        if search:
+            qs = qs.filter(
+                Q(customer__name__icontains=search) |
+                Q(customer__code__icontains=search) |
+                Q(product__name__icontains=search) |
+                Q(product__product_id__icontains=search) |
+                Q(batch_no__icontains=search)
+            )
+        return qs
+
+    @action(detail=True, methods=['post'])
+    def correct_stock(self, request, pk=None):
+        stock = self.get_object()
+        corrected_quantity = request.data.get('corrected_quantity')
+        reason = request.data.get('reason')
+
+        if corrected_quantity is None or reason is None:
+            raise ValidationError("corrected_quantity and reason are required.")
+
+        try:
+            corrected_quantity = float(corrected_quantity)
+        except ValueError:
+            raise ValidationError("corrected_quantity must be a valid float.")
+
+        original_quantity = stock.quantity
+
+        # Log correction
+        ProductStockCorrectionLog.objects.create(
+            customer=stock.customer,
+            product=stock.product,
+            batch_no=stock.batch_no,
+            quantity=original_quantity,
+            corrected_quantity=corrected_quantity,
+            reason=reason
+        )
+
+        # Update stock
+        stock.quantity = corrected_quantity
+        stock.save()
+
+        return Response(ProductStockSerializer(stock, context={'request': request}).data)
+
+class ProductStockCorrectionLogViewSet(viewsets.ReadOnlyModelViewSet):
+    pagination_class = DynamicResultSetPagination
+    queryset = ProductStockCorrectionLog.objects.all().order_by('-id')
+    serializer_class = ProductStockCorrectionLogSerializer
+
+    def get_queryset(self):
+        qs = ProductStockCorrectionLog.objects.all().order_by('-id')
+        search = self.request.query_params.get('search', '').strip()
+        if search:
+            qs = qs.filter(
+                Q(customer__name__icontains=search) |
+                Q(customer__code__icontains=search) |
+                Q(product__name__icontains=search) |
+                Q(product__product_id__icontains=search) |
+                Q(batch_no__icontains=search) |
+                Q(reason__icontains=search)
+            )
+        return qs
+

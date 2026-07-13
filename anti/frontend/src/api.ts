@@ -23,7 +23,8 @@ api.interceptors.request.use((config) => {
         const base = customEndpoint.endsWith('/') ? customEndpoint.slice(0, -1) : customEndpoint;
         config.baseURL = base;
     } else if (!config.baseURL) {
-        config.baseURL = `http://${window.location.hostname}:8000`; // Fallback to master API
+        const envApiUrl = import.meta.env.VITE_API_URL;
+        config.baseURL = envApiUrl || `http://${window.location.hostname}:8000`; // Fallback to master API
     }
 
     if (token) {

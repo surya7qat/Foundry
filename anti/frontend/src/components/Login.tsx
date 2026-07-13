@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api';
 import './Login.css';
 import foundryBg from '../assets/foundry_background.png';
 
@@ -55,7 +55,7 @@ function Login() {
 
     try {
       // API call to Django backend
-      const response = await axios.post(`http://${window.location.hostname}:8000/api/token/`, {
+      const response = await api.post('/api/token/', {
         username: formData.username,
         password: formData.password,
       });

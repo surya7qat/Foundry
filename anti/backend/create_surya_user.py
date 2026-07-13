@@ -1,7 +1,12 @@
 import os
 import django
+from pathlib import Path
+from dotenv import load_dotenv
 
 # Setup Django
+BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR / '.env')
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 django.setup()
 
@@ -12,12 +17,12 @@ def create_surya():
     client, created = Client.objects.get_or_create(
         name="Surya Castings",
         defaults={
-            "api_endpoint": "http://127.0.0.1:8000",
-            "db_name": "surya_castings",
-            "db_host": "localhost",
-            "db_user": "root",
-            "db_password": "Harini@1415",
-            "db_port": 3306
+            "api_endpoint": os.getenv('PROD_API_ENDPOINT', 'http://127.0.0.1:8000'),
+            "db_name": os.getenv('DB_TENANT_NAME', 'surya_castings'),
+            "db_host": os.getenv('DB_HOST', 'localhost'),
+            "db_user": os.getenv('DB_USER', 'root'),
+            "db_password": os.getenv('DB_PASSWORD', 'Harini@1415'),
+            "db_port": int(os.getenv('DB_PORT', 3306))
         }
     )
     if created:

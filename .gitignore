@@ -26,3 +26,7 @@ db.sqlite3
 # Frontend build outputs
 anti/frontend/dist/
 dist/
+
+# Logs
+*.log
+anti/backend/logs/

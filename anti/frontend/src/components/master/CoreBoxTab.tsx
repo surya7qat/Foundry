@@ -215,7 +215,7 @@ const CoreBoxTab: React.FC = () => {
 
         const validProducts = filteredProducts.map(p => ({
             product_id: p.product_id,
-            cavity: p.cavity === '' ? 1 : (parseInt(p.cavity as any) || 1)
+            cavity: (p.cavity as any) === '' ? 1 : (parseInt(p.cavity as any) || 1)
         }));
 
         const payload = {

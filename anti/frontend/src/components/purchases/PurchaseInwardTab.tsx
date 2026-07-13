@@ -31,6 +31,7 @@ interface PurchaseInward {
     bill_no: string;
     bill_date: string;
     remarks: string;
+    status: string;
     items: InwardItem[];
 }
 

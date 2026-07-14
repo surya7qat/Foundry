@@ -41,7 +41,7 @@ api.interceptors.response.use(
     },
     (error) => {
         window.dispatchEvent(new Event('api-load-end'));
-        if (!error.response || error.code === 'ERR_NETWORK') {
+        if (!error.response || error.code === 'ERR_NETWORK' || (error.response && error.response.status >= 500)) {
             window.dispatchEvent(new Event('api-network-error'));
         }
         if (error.response?.status === 401) {

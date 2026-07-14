@@ -4,11 +4,11 @@ const api = axios.create();
 
 api.interceptors.request.use((config) => {
     window.dispatchEvent(new Event('api-load-start'));
-    
+
     // Implement Option A Dynamic Endpoint Routing
     let customEndpoint = sessionStorage.getItem('api_endpoint');
     const token = sessionStorage.getItem('access_token');
-    
+
     if (customEndpoint) {
         // Support Wi-Fi sharing: replace local addresses with the currently used hostname
         if (customEndpoint.includes('127.0.0.1')) {
@@ -17,7 +17,7 @@ api.interceptors.request.use((config) => {
             customEndpoint = customEndpoint.replace('localhost', window.location.hostname);
         }
     }
-    
+
     if (customEndpoint && config.url?.startsWith('/')) {
         // Strip trailing slash from endpoint if it has one
         const base = customEndpoint.endsWith('/') ? customEndpoint.slice(0, -1) : customEndpoint;
@@ -41,7 +41,7 @@ api.interceptors.response.use(
     },
     (error) => {
         window.dispatchEvent(new Event('api-load-end'));
-        if (!error.response || error.code === 'ERR_NETWORK') {
+        if (!error.response || error.code === 'ERR_NETWORK' || (error.response && error.response.status >= 500)) {
             window.dispatchEvent(new Event('api-network-error'));
         }
         if (error.response?.status === 401) {

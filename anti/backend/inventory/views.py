@@ -2,15 +2,18 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticated
+from django.db import models
+from django.utils import timezone
 from django.db.models import Q
 from .models import (
     Supplier, RawMaterial, Customer, PatternMaterial, Product, CoreBox, Pattern,
-    MaterialStock, MaterialStockCorrectionLog, ProductStock, ProductStockCorrectionLog
+    MaterialStock, MaterialStockCorrectionLog, ProductStock, ProductStockCorrectionLog,
+    PatternLog
 )
 from .serializers import (
     SupplierSerializer, RawMaterialSerializer, CustomerSerializer, PatternMaterialSerializer, ProductSerializer, CoreBoxSerializer, PatternSerializer,
-    MaterialStockSerializer, MaterialStockCorrectionLogSerializer, ProductStockSerializer, ProductStockCorrectionLogSerializer
+    MaterialStockSerializer, MaterialStockCorrectionLogSerializer, ProductStockSerializer, ProductStockCorrectionLogSerializer,
+    PatternLogSerializer
 )
 from rest_framework.response import Response
 
@@ -317,6 +320,113 @@ class PatternViewSet(viewsets.ModelViewSet):
                 qs = qs.filter(pattern_filter)
         return qs
 
+    @action(detail=True, methods=['post'])
+    def out_for_production(self, request, pk=None):
+        pattern = self.get_object()
+        
+        # Check if already in production
+        latest_prod = pattern.logs.filter(type_of_entry__in=['OUT_FOR_PRODUCTION', 'RETURN_FROM_PRODUCTION']).order_by('-date', '-id').first()
+        if latest_prod and latest_prod.type_of_entry == 'OUT_FOR_PRODUCTION':
+            raise ValidationError("Pattern is already in production.")
+        
+        # Check validation: when inception date is less than one month it should throw 400
+        latest_inc = pattern.logs.filter(type_of_entry__in=['INCEPTION', 'INWARD']).order_by('-date', '-id').first()
+        if latest_inc:
+            from datetime import timedelta
+            if timezone.now() - latest_inc.date < timedelta(days=30):
+                raise ValidationError("Cannot send pattern out for production; last inception/inward date is less than 30 days ago.")
+        
+        description = request.data.get('description', 'Out for Production')
+        log = PatternLog.objects.create(
+            pattern=pattern,
+            type_of_entry='OUT_FOR_PRODUCTION',
+            description=description,
+            date=timezone.now()
+        )
+        return Response(PatternLogSerializer(log, context={'request': request}).data)
+
+    @action(detail=True, methods=['post'])
+    def return_from_production(self, request, pk=None):
+        pattern = self.get_object()
+        
+        # Check if not in production
+        latest_prod = pattern.logs.filter(type_of_entry__in=['OUT_FOR_PRODUCTION', 'RETURN_FROM_PRODUCTION']).order_by('-date', '-id').first()
+        if not latest_prod or latest_prod.type_of_entry != 'OUT_FOR_PRODUCTION':
+            raise ValidationError("Pattern is not currently in production.")
+        
+        description = request.data.get('description', 'Return from Production')
+        log = PatternLog.objects.create(
+            pattern=pattern,
+            type_of_entry='RETURN_FROM_PRODUCTION',
+            description=description,
+            date=timezone.now()
+        )
+        return Response(PatternLogSerializer(log, context={'request': request}).data)
+
+    @action(detail=True, methods=['post'])
+    def create_entry(self, request, pk=None):
+        pattern = self.get_object()
+        type_of_entry = request.data.get('type_of_entry')
+        description = request.data.get('description')
+        photo = request.data.get('photo')
+        photos = request.data.get('photos', [])
+        
+        if not type_of_entry or type_of_entry not in ['INWARD', 'OUTWARD', 'INCEPTION']:
+            raise ValidationError("A valid type_of_entry (INWARD, OUTWARD, or INCEPTION) is required.")
+        
+        if not description:
+            raise ValidationError("description is required.")
+            
+        # Check if pattern is in production
+        latest_prod = pattern.logs.filter(type_of_entry__in=['OUT_FOR_PRODUCTION', 'RETURN_FROM_PRODUCTION']).order_by('-date', '-id').first()
+        if latest_prod and latest_prod.type_of_entry == 'OUT_FOR_PRODUCTION':
+            raise ValidationError("Cannot perform entry while pattern is in production.")
+            
+        # Check last entry between inward and outward
+        latest_io = pattern.logs.filter(type_of_entry__in=['INWARD', 'OUTWARD']).order_by('-date', '-id').first()
+        
+        if type_of_entry in ['INWARD', 'OUTWARD']:
+            if latest_io:
+                if latest_io.type_of_entry == type_of_entry:
+                    raise ValidationError(f"Cannot add consecutive {type_of_entry.capitalize()} entries. The pattern is already in that state.")
+        elif type_of_entry == 'INCEPTION':
+            if latest_io and latest_io.type_of_entry == 'OUTWARD':
+                raise ValidationError("Cannot add inception entry when the pattern is currently Outward.")
+                
+        # Resolve photo upload
+        uploaded_photos = []
+        if photo:
+            uploaded_photos = [photo] if isinstance(photo, str) else photo
+        elif photos:
+            uploaded_photos = photos
+            
+        if type_of_entry == 'INWARD':
+            if (not pattern.photos or len(pattern.photos) == 0) and uploaded_photos:
+                pattern.photos = uploaded_photos
+                pattern.save()
+
+        log = PatternLog.objects.create(
+            pattern=pattern,
+            type_of_entry=type_of_entry,
+            description=description,
+            photos=uploaded_photos,
+            date=timezone.now()
+        )
+        return Response(PatternLogSerializer(log, context={'request': request}).data)
+
+    @action(detail=True, methods=['get'])
+    def logs(self, request, pk=None):
+        pattern = self.get_object()
+        logs = pattern.logs.all().order_by('-date', '-id')
+        
+        page = self.paginate_queryset(logs)
+        if page is not None:
+            serializer = PatternLogSerializer(page, many=True, context={'request': request})
+            return self.get_paginated_response(serializer.data)
+            
+        serializer = PatternLogSerializer(logs, many=True, context={'request': request})
+        return Response(serializer.data)
+
 class MaterialStockViewSet(viewsets.ModelViewSet):
     pagination_class = DynamicResultSetPagination
     queryset = MaterialStock.objects.all().order_by('-id')
@@ -509,4 +619,51 @@ class ProductStockCorrectionLogViewSet(viewsets.ReadOnlyModelViewSet):
                 Q(reason__icontains=search)
             )
         return qs
+
+
+class PatternLogViewSet(viewsets.ModelViewSet):
+    pagination_class = DynamicResultSetPagination
+    queryset = PatternLog.objects.all().order_by('-date', '-id')
+    serializer_class = PatternLogSerializer
+
+    def get_queryset(self):
+        qs = PatternLog.objects.all().order_by('-date', '-id')
+        pattern_id = self.request.query_params.get('pattern')
+        if pattern_id:
+            qs = qs.filter(pattern_id=pattern_id)
+            
+        search = self.request.query_params.get('search', '').strip()
+        if search:
+            qs = qs.filter(
+                Q(pattern__pattern_id__icontains=search) |
+                Q(description__icontains=search) |
+                Q(type_of_entry__icontains=search)
+            )
+        return qs
+
+    def update(self, request, *args, **kwargs):
+        if not request.user or not request.user.is_superuser:
+            raise ValidationError("Only admin/superuser accounts can edit the log entries.")
+        
+        instance = self.get_object()
+        date = request.data.get('date')
+        description = request.data.get('description')
+        
+        if not description:
+            raise ValidationError("Description is required.")
+            
+        if date:
+            instance.date = date
+        instance.description = description
+        instance.save()
+        return Response(self.get_serializer(instance).data)
+
+    def partial_update(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        if not request.user or not request.user.is_superuser:
+            raise ValidationError("Only admin/superuser accounts can delete log entries.")
+        return super().destroy(request, *args, **kwargs)
+
 

@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from .models import (
     Supplier, RawMaterial, Customer, PatternMaterial, Product, CoreBox, Pattern,
-    MaterialStock, MaterialStockCorrectionLog, ProductStock, ProductStockCorrectionLog
+    MaterialStock, MaterialStockCorrectionLog, ProductStock, ProductStockCorrectionLog,
+    PatternLog
 )
 def mask_customer_name(request, customer_obj, default_name):
     if not request or not request.user or request.user.is_superuser:
@@ -80,8 +81,13 @@ class CoreBoxSerializer(serializers.ModelSerializer):
 
 class PatternSerializer(serializers.ModelSerializer):
     customer_name = serializers.SerializerMethodField()
+    customer_code = serializers.CharField(source='customer.code', read_only=True)
     top_plate_name = serializers.SerializerMethodField()
     bottom_plate_name = serializers.SerializerMethodField()
+    current_status = serializers.SerializerMethodField()
+    last_entry_type = serializers.SerializerMethodField()
+    last_inception_date = serializers.SerializerMethodField()
+    core_boxes_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Pattern
@@ -96,6 +102,36 @@ class PatternSerializer(serializers.ModelSerializer):
 
     def get_bottom_plate_name(self, obj):
         return obj.bottom_plate.name if obj.bottom_plate else None
+
+    def get_current_status(self, obj):
+        latest_prod = obj.logs.filter(type_of_entry__in=['OUT_FOR_PRODUCTION', 'RETURN_FROM_PRODUCTION']).order_by('-date', '-id').first()
+        if latest_prod and latest_prod.type_of_entry == 'OUT_FOR_PRODUCTION':
+            return 'IN_PRODUCTION'
+        return 'IN_STOCK'
+
+    def get_last_entry_type(self, obj):
+        latest_io = obj.logs.filter(type_of_entry__in=['INWARD', 'OUTWARD']).order_by('-date', '-id').first()
+        return latest_io.type_of_entry if latest_io else None
+
+    def get_last_inception_date(self, obj):
+        latest_inc = obj.logs.filter(type_of_entry__in=['INCEPTION', 'INWARD']).order_by('-date', '-id').first()
+        return latest_inc.date if latest_inc else None
+
+    def get_core_boxes_count(self, obj):
+        return len(obj.core_boxes) if obj.core_boxes else 0
+
+
+class PatternLogSerializer(serializers.ModelSerializer):
+    pattern_code = serializers.CharField(source='pattern.pattern_id', read_only=True)
+    customer_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PatternLog
+        fields = '__all__'
+
+    def get_customer_name(self, obj):
+        request = self.context.get('request')
+        return mask_customer_name(request, obj.pattern.customer, obj.pattern.customer.name)
 
 # Material Stock Serializers
 class MaterialStockSerializer(serializers.ModelSerializer):

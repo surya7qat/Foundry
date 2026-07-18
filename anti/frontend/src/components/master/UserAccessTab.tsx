@@ -23,6 +23,7 @@ interface Role {
     can_access_material_stock_log: boolean;
     can_access_product_stock: boolean;
     can_access_product_stock_log: boolean;
+    can_access_pattern_flow: boolean;
 }
 
 interface CustomUser {
@@ -86,6 +87,7 @@ const UserAccessTab: React.FC = () => {
         can_access_material_stock_log: false,
         can_access_product_stock: false,
         can_access_product_stock_log: false,
+        can_access_pattern_flow: false,
     });
 
     const [userForm, setUserForm] = useState({
@@ -214,6 +216,7 @@ const UserAccessTab: React.FC = () => {
             can_access_material_stock_log: role.can_access_material_stock_log,
             can_access_product_stock: role.can_access_product_stock,
             can_access_product_stock_log: role.can_access_product_stock_log,
+            can_access_pattern_flow: role.can_access_pattern_flow,
         });
         setRoleErrors({});
         setRoleViewMode('edit');
@@ -238,6 +241,7 @@ const UserAccessTab: React.FC = () => {
             can_access_material_stock_log: false,
             can_access_product_stock: false,
             can_access_product_stock_log: false,
+            can_access_pattern_flow: false,
         });
         setRoleErrors({});
         setRoleViewMode('list');
@@ -825,6 +829,34 @@ const UserAccessTab: React.FC = () => {
                                                      { key: 'can_access_material_stock_log', label: 'Material Stock Log' },
                                                      { key: 'can_access_product_stock', label: 'Product Stock' },
                                                      { key: 'can_access_product_stock_log', label: 'Product Stock Log' },
+                                                 ].map(menu => (
+                                                     <label key={menu.key} style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'white', cursor: 'pointer', margin: 0 }}>
+                                                         <input 
+                                                             type="checkbox" 
+                                                             checked={(roleForm as any)[menu.key]} 
+                                                             onChange={e => setRoleForm({ ...roleForm, [menu.key]: e.target.checked })} 
+                                                             style={{ width: '18px', height: '18px', accentColor: 'var(--color-accent)' }}
+                                                         />
+                                                         <span>{menu.label}</span>
+                                                     </label>
+                                                 ))}
+                                             </div>
+                                        </div>
+
+                                        {/* Pattern System Category */}
+                                        <div style={{ marginTop: '20px' }}>
+                                             <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', cursor: 'pointer' }}>
+                                                 <input 
+                                                     type="checkbox" 
+                                                     checked={roleForm.can_access_pattern_flow} 
+                                                     onChange={e => setRoleForm({ ...roleForm, can_access_pattern_flow: e.target.checked })} 
+                                                     style={{ width: '16px', height: '16px', accentColor: 'var(--color-molten-yellow)' }}
+                                                 />
+                                                 <span style={{ color: 'var(--color-molten-yellow)', fontSize: '0.95rem', fontWeight: 600 }}>Pattern System (Select All)</span>
+                                             </label>
+                                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '12px', paddingLeft: '26px' }}>
+                                                 {[
+                                                     { key: 'can_access_pattern_flow', label: 'Pattern Flow / Tracking' },
                                                  ].map(menu => (
                                                      <label key={menu.key} style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'white', cursor: 'pointer', margin: 0 }}>
                                                          <input 

@@ -19,6 +19,7 @@ def get_user_permissions(user):
         'can_access_material_stock_log': False,
         'can_access_product_stock': False,
         'can_access_product_stock_log': False,
+        'can_access_pattern_flow': False,
     }
     if user.is_superuser:
         for k in perms.keys():
@@ -40,6 +41,7 @@ def get_user_permissions(user):
         perms['can_access_material_stock_log'] = role.can_access_material_stock_log
         perms['can_access_product_stock'] = role.can_access_product_stock
         perms['can_access_product_stock_log'] = role.can_access_product_stock_log
+        perms['can_access_pattern_flow'] = role.can_access_pattern_flow
     return perms
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):

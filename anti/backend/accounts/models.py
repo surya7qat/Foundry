@@ -69,6 +69,7 @@ class Role(models.Model):
     can_access_material_stock_log = models.BooleanField(default=False)
     can_access_product_stock = models.BooleanField(default=False)
     can_access_product_stock_log = models.BooleanField(default=False)
+    can_access_pattern_flow = models.BooleanField(default=False)
 
     class Meta:
         unique_together = ('client', 'name')

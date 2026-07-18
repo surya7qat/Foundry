@@ -35,6 +35,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const [isMasterOpen, setIsMasterOpen] = useState(false);
   const [isPurchaseOpen, setIsPurchaseOpen] = useState(false);
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
+  const [isPatternFlowOpen, setIsPatternFlowOpen] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const handleLogout = () => {
@@ -72,6 +73,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                                hasPermission('can_access_product_stock') ||
                                hasPermission('can_access_product_stock_log') ||
                                isSuperuser;
+
+  const showPatternFlowSection = hasPermission('can_access_pattern_flow');
 
   const showMastersSection = hasPermission('can_access_supplier_master') ||
                              hasPermission('can_access_raw_material_master') ||
@@ -235,6 +238,40 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                       <div className="menu-item-left">
                         <History size={18} className="menu-icon-sub" />
                         <span>Product Stock Log</span>
+                      </div>
+                    </button>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+
+          {showPatternFlowSection && (
+            <>
+              <p className="menu-group-label" style={{ marginTop: '1.5rem' }}>PATTERN SYSTEM</p>
+              <div className="accordion-group">
+                <button
+                  className={`menu-item accordion-toggle ${isPatternFlowOpen ? 'open' : ''}`}
+                  onClick={() => setIsPatternFlowOpen(!isPatternFlowOpen)}
+                >
+                  <div className="menu-item-left">
+                    <Cpu size={20} className="menu-icon" />
+                    <span>Pattern Flow</span>
+                  </div>
+                  <span className="chevron">
+                    {isPatternFlowOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                  </span>
+                </button>
+
+                <div className={`accordion-content ${isPatternFlowOpen ? 'expanded' : ''}`}>
+                  {hasPermission('can_access_pattern_flow') && (
+                    <button
+                      className={`sub-menu-item ${isActive('/pattern-flow/pattern') ? 'active' : ''}`}
+                      onClick={() => handleNavigation('/pattern-flow/pattern')}
+                    >
+                      <div className="menu-item-left">
+                        <Cpu size={18} className="menu-icon-sub" />
+                        <span>Pattern Tracking</span>
                       </div>
                     </button>
                   )}

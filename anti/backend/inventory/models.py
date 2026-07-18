@@ -191,4 +191,24 @@ class ProductStockCorrectionLog(BaseModel):
         return f"Correction for {self.product.name} Batch {self.batch_no} from {self.quantity} to {self.corrected_quantity}"
 
 
+class PatternLog(BaseModel):
+    ENTRY_TYPE_CHOICES = [
+        ('INWARD', 'Inward'),
+        ('OUTWARD', 'Outward'),
+        ('INCEPTION', 'Inception'),
+        ('OUT_FOR_PRODUCTION', 'Out for Production'),
+        ('RETURN_FROM_PRODUCTION', 'Return from Production'),
+    ]
+
+    pattern = models.ForeignKey(Pattern, on_delete=models.CASCADE, related_name='logs')
+    date = models.DateTimeField(default=timezone.now)
+    type_of_entry = models.CharField(max_length=50, choices=ENTRY_TYPE_CHOICES)
+    description = models.TextField()
+    photos = models.JSONField(default=list, blank=True)  # list of base64 strings
+
+    def __str__(self):
+        return f"PatternLog: {self.pattern.pattern_id} - {self.type_of_entry} on {self.date}"
+
+
+
 

@@ -339,7 +339,8 @@ def clean_and_seed_5():
                 can_access_material_stock=True,
                 can_access_material_stock_log=True,
                 can_access_product_stock=True,
-                can_access_product_stock_log=True
+                can_access_product_stock_log=True,
+                can_access_pattern_flow=(i % 2 == 1)
             )
             seeded_roles.append(role)
         print("Seeded 5 Roles!")

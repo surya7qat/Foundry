@@ -16,6 +16,7 @@ import MaterialStockTab from './components/inventory/MaterialStockTab';
 import MaterialStockLogTab from './components/inventory/MaterialStockLogTab';
 import ProductStockTab from './components/inventory/ProductStockTab';
 import ProductStockLogTab from './components/inventory/ProductStockLogTab';
+import PatternFlowTab from './components/inventory/PatternFlowTab';
 import { ToastProvider } from './contexts/ToastContext';
 import GlobalLoader from './components/common/GlobalLoader';
 import WelcomeDashboard from './components/master/WelcomeDashboard';
@@ -37,7 +38,8 @@ const pathPermissions: Record<string, string> = {
   '/inventory/material-stock': 'can_access_material_stock',
   '/inventory/material-stock-log': 'can_access_material_stock_log',
   '/inventory/product-stock': 'can_access_product_stock',
-  '/inventory/product-stock-log': 'can_access_product_stock_log'
+  '/inventory/product-stock-log': 'can_access_product_stock_log',
+  '/pattern-flow/pattern': 'can_access_pattern_flow'
 };
 
 // Protected Route Component Wrapper
@@ -175,6 +177,11 @@ function App() {
             <Route path="/inventory/product-stock-log" element={
               <ProtectedRoute>
                 <ProductStockLogTab />
+              </ProtectedRoute>
+            } />
+            <Route path="/pattern-flow/pattern" element={
+              <ProtectedRoute>
+                <PatternFlowTab />
               </ProtectedRoute>
             } />
           </Routes>

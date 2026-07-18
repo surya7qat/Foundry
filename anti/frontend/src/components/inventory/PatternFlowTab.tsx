@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../../api';
-import { Search, ChevronLeft, ChevronRight, Image as ImageIcon, History } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Image as ImageIcon, History, Edit2, Upload } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
 import '../master/MasterStyles.css';
 

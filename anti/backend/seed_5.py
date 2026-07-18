@@ -23,6 +23,14 @@ def clean_and_seed_5():
     PurchaseInwardItem.objects.using(db).all().delete()
     PurchaseInward.objects.using(db).all().delete()
     
+    # Delete dependent logs and stocks to prevent RestrictedError
+    from inventory.models import ProductStock, ProductStockCorrectionLog, MaterialStock, MaterialStockCorrectionLog, PatternLog
+    PatternLog.objects.using(db).all().delete()
+    ProductStockCorrectionLog.objects.using(db).all().delete()
+    ProductStock.objects.using(db).all().delete()
+    MaterialStockCorrectionLog.objects.using(db).all().delete()
+    MaterialStock.objects.using(db).all().delete()
+    
     # Delete masters
     Pattern.objects.using(db).all().delete()
     CoreBox.objects.using(db).all().delete()

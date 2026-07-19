@@ -169,6 +169,8 @@
     accent-color: var(--color-accent, #FF6B35);
     box-sizing: border-box;
     min-width: 0;
+    -webkit-appearance: none;
+    appearance: none;
 }
 
 .glass-input::-webkit-calendar-picker-indicator {

@@ -90,6 +90,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
                 style={{ 
                     ...style, 
                     width: '100%', 
+                    minWidth: 0,
                     cursor: 'pointer', 
                     paddingRight: '22px', 
                     paddingLeft: '8px', 

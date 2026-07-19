@@ -119,6 +119,7 @@ class CoreBox(BaseModel):
     bottom_core_box = models.ForeignKey(PatternMaterial, on_delete=models.SET_NULL, null=True, blank=True, related_name='coreboxes_bottom')
     products = models.JSONField(default=list, blank=True)  # list of {product_id: int, cavity: int}
     core_box_type = models.CharField(max_length=20, choices=CORE_BOX_TYPE_CHOICES, default='CO2')
+    total_weight = models.FloatField(default=0.0)
     photos = models.JSONField(default=list, blank=True)  # list of base64 strings
     description = models.CharField(max_length=250, blank=True)
 

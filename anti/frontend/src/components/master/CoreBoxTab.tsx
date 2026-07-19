@@ -8,6 +8,8 @@ import '../master/MasterStyles.css';
 interface ProductCavity {
     product_id: string;
     cavity: number;
+    core_weight?: number;
+    part?: string;
 }
 
 interface Customer {
@@ -41,6 +43,7 @@ interface CoreBox {
     bottom_core_box_name?: string;
     products: ProductCavity[];
     core_box_type: string;
+    total_weight?: number;
     photos: string[];
     description: string;
     is_active: boolean;
@@ -76,7 +79,8 @@ const CoreBoxTab: React.FC = () => {
         description: '',
         is_active: true,
         products: [] as ProductCavity[],
-        photos: [] as string[]
+        photos: [] as string[],
+        total_weight: 0
     });
     
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -141,7 +145,8 @@ const CoreBoxTab: React.FC = () => {
             description: cb.description || '',
             is_active: cb.is_active,
             products: cb.products || [],
-            photos: cb.photos || []
+            photos: cb.photos || [],
+            total_weight: cb.total_weight || 0
         });
         setErrors({});
         setViewMode('edit');
@@ -159,7 +164,8 @@ const CoreBoxTab: React.FC = () => {
             description: '',
             is_active: true,
             products: [],
-            photos: []
+            photos: [],
+            total_weight: 0
         });
         setErrors({});
         setViewMode('list');
@@ -168,7 +174,7 @@ const CoreBoxTab: React.FC = () => {
     const handleAddProductRow = () => {
         setFormData(prev => ({
             ...prev,
-            products: [...prev.products, { product_id: '', cavity: 1 }]
+            products: [...prev.products, { product_id: '', cavity: 1, core_weight: 0, part: '' }]
         }));
     };
 
@@ -222,7 +228,9 @@ const CoreBoxTab: React.FC = () => {
 
         const validProducts = filteredProducts.map(p => ({
             product_id: p.product_id,
-            cavity: (p.cavity as any) === '' ? 1 : (parseInt(p.cavity as any) || 1)
+            cavity: (p.cavity as any) === '' ? 1 : (parseInt(p.cavity as any) || 1),
+            core_weight: (p.core_weight as any) === '' ? 0 : (parseFloat(p.core_weight as any) || 0),
+            part: p.part || ''
         }));
 
         const payload = {
@@ -230,7 +238,8 @@ const CoreBoxTab: React.FC = () => {
             customer: parseInt(formData.customer),
             top_core_box: formData.top_core_box ? parseInt(formData.top_core_box) : null,
             bottom_core_box: formData.bottom_core_box ? parseInt(formData.bottom_core_box) : null,
-            products: validProducts
+            products: validProducts,
+            total_weight: parseFloat(formData.total_weight as any) || 0
         };
 
         try {
@@ -272,6 +281,21 @@ const CoreBoxTab: React.FC = () => {
     const getProductName = (prodId: string) => {
         const found = allProducts.find(p => p.id.toString() === prodId || p.product_id === prodId);
         return found ? found.name : prodId;
+    };
+
+    const calculateCoreBoxMetrics = (cb: CoreBox) => {
+        const totalWeight = cb.total_weight || 0;
+        let totalPcsWeight = 0;
+        cb.products?.forEach(p => {
+            const cavity = p.cavity || 0;
+            const coreWeight = p.core_weight || 0;
+            totalPcsWeight += cavity * coreWeight;
+        });
+        const wastage = totalWeight - totalPcsWeight;
+        return {
+            totalPcsWeight,
+            wastage
+        };
     };
 
     // Prepare dropdown options formatted as { value, label } for SearchableSelect
@@ -413,46 +437,59 @@ const CoreBoxTab: React.FC = () => {
                                             <th>Top Box Mat.</th>
                                             <th>Bottom Box Mat.</th>
                                             <th>Type</th>
-                                            <th>Products & Cavity</th>
+                                            <th>Total Weight</th>
+                                            <th>Products (Cavities & Weight)</th>
+                                            <th>Wastage</th>
                                             <th style={{width: '80px', textAlign: 'center'}}>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {coreBoxes.length === 0 ? (
-                                            <tr><td colSpan={8} style={{textAlign:'center', padding:'2rem'}}>No Core Boxes recorded yet.</td></tr>
-                                        ) : coreBoxes.map(cb => (
-                                            <tr key={cb.id} className={(editingId === cb.id ? 'editing-row ' : '') + (!cb.is_active ? 'inactive-row' : '')}>
-                                                <td className="wrap-text">{cb.customer_name || '-'}</td>
-                                                <td style={{ fontWeight: '700', fontFamily: 'monospace', color: 'var(--color-molten-yellow)' }} className="wrap-text">{cb.core_box_id}</td>
-                                                <td className="wrap-text">
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                        <span 
-                                                            style={{ 
-                                                                width: '8px', 
-                                                                height: '8px', 
-                                                                borderRadius: '50%', 
-                                                                background: cb.is_active ? '#22c55e' : '#ef4444',
-                                                                boxShadow: cb.is_active ? '0 0 8px #22c55e' : '0 0 8px #ef4444',
-                                                                display: 'inline-block',
-                                                                flexShrink: 0
-                                                            }} 
-                                                            title={cb.is_active ? 'Active' : 'Inactive'}
-                                                        />
-                                                        <span style={{ fontWeight: '600', color: '#fff', wordBreak: 'break-all' }}>{cb.name}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="wrap-text">{cb.top_core_box_name || '-'}</td>
-                                                <td className="wrap-text">{cb.bottom_core_box_name || '-'}</td>
-                                                <td style={{ textTransform: 'uppercase', fontFamily: 'monospace' }}>{cb.core_box_type}</td>
-                                                <td className="wrap-text">
-                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                                        {cb.products?.map((p, idx) => (
-                                                            <span key={idx} style={{ fontSize: '0.8rem', color: '#ccc' }}>
-                                                                {getProductName(p.product_id)} (Cavities: <strong>{p.cavity}</strong>)
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                </td>
+                                            <tr><td colSpan={10} style={{textAlign:'center', padding:'2rem'}}>No Core Boxes recorded yet.</td></tr>
+                                        ) : coreBoxes.map(cb => {
+                                            const metrics = calculateCoreBoxMetrics(cb);
+                                            return (
+                                                <tr key={cb.id} className={(editingId === cb.id ? 'editing-row ' : '') + (!cb.is_active ? 'inactive-row' : '')}>
+                                                    <td className="wrap-text">{cb.customer_name || '-'}</td>
+                                                    <td style={{ fontWeight: '700', fontFamily: 'monospace', color: 'var(--color-molten-yellow)' }} className="wrap-text">{cb.core_box_id}</td>
+                                                    <td className="wrap-text">
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                            <span 
+                                                                style={{ 
+                                                                    width: '8px', 
+                                                                    height: '8px', 
+                                                                    borderRadius: '50%', 
+                                                                    background: cb.is_active ? '#22c55e' : '#ef4444',
+                                                                    boxShadow: cb.is_active ? '0 0 8px #22c55e' : '0 0 8px #ef4444',
+                                                                    display: 'inline-block',
+                                                                    flexShrink: 0
+                                                                }} 
+                                                                title={cb.is_active ? 'Active' : 'Inactive'}
+                                                            />
+                                                            <span style={{ fontWeight: '600', color: '#fff', wordBreak: 'break-all' }}>{cb.name}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="wrap-text">{cb.top_core_box_name || '-'}</td>
+                                                    <td className="wrap-text">{cb.bottom_core_box_name || '-'}</td>
+                                                    <td style={{ textTransform: 'uppercase', fontFamily: 'monospace' }}>{cb.core_box_type}</td>
+                                                    <td style={{ fontFamily: 'monospace' }}>{(cb.total_weight || 0).toFixed(3)} Kg</td>
+                                                    <td className="wrap-text">
+                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                            {cb.products?.map((p, idx) => {
+                                                                const cavity = p.cavity || 0;
+                                                                const coreWeight = p.core_weight || 0;
+                                                                const itemTotalWeight = cavity * coreWeight;
+                                                                return (
+                                                                    <span key={idx} style={{ fontSize: '0.8rem', color: '#ccc', display: 'block' }}>
+                                                                        {getProductName(p.product_id)} {p.part ? `(${p.part})` : ''}: Cavity <strong>{cavity}</strong> * <strong>{coreWeight.toFixed(3)}</strong> Kg = <strong>{itemTotalWeight.toFixed(3)}</strong> Kg
+                                                                    </span>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    </td>
+                                                    <td style={{ fontFamily: 'monospace', color: metrics.wastage >= 0 ? '#fbbf24' : '#ef4444' }}>
+                                                        {metrics.wastage.toFixed(3)} Kg
+                                                    </td>
                                                 <td>
                                                     <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center' }}>
                                                         <button className="action-icon-btn edit-btn" onClick={() => handleEdit(cb)} title="Edit Core Box">
@@ -466,7 +503,8 @@ const CoreBoxTab: React.FC = () => {
                                                     </div>
                                                 </td>
                                             </tr>
-                                        ))}
+                                            );
+                                        })}
                                     </tbody>
                                 </table>
                             </div>
@@ -503,14 +541,21 @@ const CoreBoxTab: React.FC = () => {
                                             <p><strong>Top Box Mat.</strong> <span style={{ wordBreak: 'break-all' }}>{cb.top_core_box_name || '-'}</span></p>
                                             <p><strong>Bottom Box Mat.</strong> <span style={{ wordBreak: 'break-all' }}>{cb.bottom_core_box_name || '-'}</span></p>
                                             <p><strong>Type</strong> <span>{cb.core_box_type}</span></p>
+                                            <p><strong>Total Weight</strong> <span style={{ fontFamily: 'monospace' }}>{(cb.total_weight || 0).toFixed(3)} Kg</span></p>
+                                            <p><strong>Wastage</strong> <span style={{ fontFamily: 'monospace', color: calculateCoreBoxMetrics(cb).wastage >= 0 ? '#fbbf24' : '#ef4444' }}>{calculateCoreBoxMetrics(cb).wastage.toFixed(3)} Kg</span></p>
                                             <div className="mobile-card-chips" style={{ marginTop: '8px' }}>
-                                                <strong>Products & Cavities</strong>
+                                                <strong>Products, Cavities & Weights</strong>
                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
-                                                    {cb.products?.map((p, idx) => (
-                                                        <span key={idx} style={{ fontSize: '0.85rem', color: '#ccc' }}>
-                                                            {getProductName(p.product_id)} (Cavities: {p.cavity})
-                                                        </span>
-                                                    ))}
+                                                    {cb.products?.map((p, idx) => {
+                                                        const cavity = p.cavity || 0;
+                                                        const coreWeight = p.core_weight || 0;
+                                                        const itemTotalWeight = cavity * coreWeight;
+                                                        return (
+                                                            <span key={idx} style={{ fontSize: '0.85rem', color: '#ccc' }}>
+                                                                {getProductName(p.product_id)} {p.part ? `(${p.part})` : ''}: Cavity {cavity} * {coreWeight.toFixed(3)} Kg = {itemTotalWeight.toFixed(3)} Kg
+                                                            </span>
+                                                        );
+                                                    })}
                                                 </div>
                                             </div>
                                             {cb.photos?.length > 0 && (
@@ -634,11 +679,27 @@ const CoreBoxTab: React.FC = () => {
                                 {errors.core_box_type && <span className="error-text">{errors.core_box_type}</span>}
                             </div>
 
-                            {/* Products with cavity dynamically managed */}
+                            {/* Total Weight in Single Take */}
+                            <div className="input-group">
+                                <label>Total Weight in Single Take (Kg) <span className="required-asterisk">*</span></label>
+                                <input 
+                                    type="number" 
+                                    className="glass-input" 
+                                    required 
+                                    min="0"
+                                    step="0.001"
+                                    placeholder="Enter total weight in single take..." 
+                                    value={formData.total_weight === 0 ? '' : formData.total_weight} 
+                                    onChange={e => setFormData({...formData, total_weight: parseFloat(e.target.value) || 0})} 
+                                />
+                                {errors.total_weight && <span className="error-text">{errors.total_weight}</span>}
+                            </div>
+
+                            {/* Products with cavity and core weight dynamically managed */}
                             <div style={{ marginTop: '1.5rem', background: 'rgba(255, 255, 255, 0.02)', padding: '15px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                                    <h4 style={{ margin: 0, color: 'var(--color-molten-yellow)', fontSize: '0.95rem' }}>Products & Cavity</h4>
-                                    <button type="button" onClick={handleAddProductRow} disabled={!formData.customer} className="btn-secondary" style={{ padding: '4px 10px', height: '28px', fontSize: '0.8rem', minHeight: 'auto', width: 'auto', margin: 0 }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
+                                    <h4 style={{ margin: 0, color: 'var(--color-molten-yellow)', fontSize: '0.95rem' }}>Products, Cavities & Weights</h4>
+                                    <button type="button" onClick={handleAddProductRow} disabled={!formData.customer} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem', minHeight: 'auto', width: 'auto', margin: 0 }}>
                                         + Add Row
                                     </button>
                                 </div>
@@ -648,29 +709,61 @@ const CoreBoxTab: React.FC = () => {
                                 ) : formData.products.length === 0 ? (
                                     <span style={{ fontSize: '0.85rem', color: '#888' }}>No products added. Add at least one row.</span>
                                 ) : (
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                         {formData.products.map((p, index) => (
-                                            <div key={index} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                                <div style={{ flex: 1 }}>
-                                                    <SearchableSelect
-                                                        options={productOptions}
-                                                        value={p.product_id}
-                                                        onChange={val => handleProductRowChange(index, 'product_id', val)}
-                                                        placeholder="Select Product..."
+                                            <div key={index} style={{ 
+                                                display: 'flex', 
+                                                flexDirection: 'column', 
+                                                gap: '8px', 
+                                                padding: '10px', 
+                                                background: 'rgba(255, 255, 255, 0.02)', 
+                                                border: '1px solid rgba(255, 255, 255, 0.05)', 
+                                                borderRadius: '6px' 
+                                            }}>
+                                                {/* Row 1: Product dropdown & delete button */}
+                                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                                        <SearchableSelect
+                                                            options={productOptions}
+                                                            value={p.product_id}
+                                                            onChange={val => handleProductRowChange(index, 'product_id', val)}
+                                                            placeholder="Select Product..."
+                                                        />
+                                                    </div>
+                                                    <button type="button" onClick={() => handleRemoveProductRow(index)} style={{ padding: '0 8px', height: '36px', minHeight: 'auto', width: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: 0, flexShrink: 0 }} className="action-icon-btn delete-btn">
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+                                                {/* Row 2: Part name, Cavity, and Weight inputs side-by-side with wrapping */}
+                                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                                    <input 
+                                                        type="text" 
+                                                        className="glass-input" 
+                                                        style={{ flex: 2, minWidth: '110px', margin: 0 }} 
+                                                        placeholder="Part / Core Name" 
+                                                        value={p.part || ''} 
+                                                        onChange={e => handleProductRowChange(index, 'part', e.target.value)} 
+                                                    />
+                                                    <input 
+                                                        type="number" 
+                                                        className="glass-input" 
+                                                        style={{ flex: 1, minWidth: '60px', margin: 0 }} 
+                                                        min={1} 
+                                                        placeholder="Cavity" 
+                                                        value={p.cavity} 
+                                                        onChange={e => handleProductRowChange(index, 'cavity', e.target.value === '' ? '' : parseInt(e.target.value))} 
+                                                    />
+                                                    <input 
+                                                        type="number" 
+                                                        className="glass-input" 
+                                                        style={{ flex: 1.5, minWidth: '80px', margin: 0 }} 
+                                                        min={0} 
+                                                        step="0.001"
+                                                        placeholder="Weight (Kg)" 
+                                                        value={p.core_weight === undefined || p.core_weight === null ? '' : p.core_weight} 
+                                                        onChange={e => handleProductRowChange(index, 'core_weight', e.target.value === '' ? '' : parseFloat(e.target.value))} 
                                                     />
                                                 </div>
-                                                <input 
-                                                    type="number" 
-                                                    className="glass-input" 
-                                                    style={{ width: '80px', margin: 0 }} 
-                                                    min={1} 
-                                                    placeholder="Cavity" 
-                                                    value={p.cavity} 
-                                                    onChange={e => handleProductRowChange(index, 'cavity', e.target.value)} 
-                                                />
-                                                <button type="button" onClick={() => handleRemoveProductRow(index)} style={{ padding: '0 8px', height: '36px', minHeight: 'auto', width: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: 0 }} className="action-icon-btn delete-btn">
-                                                    <Trash2 size={16} />
-                                                </button>
                                             </div>
                                         ))}
                                     </div>

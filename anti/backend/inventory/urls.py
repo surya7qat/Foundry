@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     SupplierViewSet, RawMaterialViewSet, CustomerViewSet, PatternMaterialViewSet, ProductViewSet, CoreBoxViewSet, PatternViewSet,
     MaterialStockViewSet, MaterialStockCorrectionLogViewSet, ProductStockViewSet, ProductStockCorrectionLogViewSet,
-    PatternLogViewSet
+    PatternLogViewSet, CoreBoxLogViewSet
 )
 
 router = DefaultRouter()
@@ -19,6 +19,7 @@ router.register(r'material-stock-correction-log', MaterialStockCorrectionLogView
 router.register(r'product-stock', ProductStockViewSet)
 router.register(r'product-stock-correction-log', ProductStockCorrectionLogViewSet)
 router.register(r'pattern-logs', PatternLogViewSet)
+router.register(r'core-box-logs', CoreBoxLogViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),

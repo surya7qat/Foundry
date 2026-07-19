@@ -265,15 +265,26 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
                 <div className={`accordion-content ${isPatternFlowOpen ? 'expanded' : ''}`}>
                   {hasPermission('can_access_pattern_flow') && (
-                    <button
-                      className={`sub-menu-item ${isActive('/pattern-flow/pattern') ? 'active' : ''}`}
-                      onClick={() => handleNavigation('/pattern-flow/pattern')}
-                    >
-                      <div className="menu-item-left">
-                        <Cpu size={18} className="menu-icon-sub" />
-                        <span>Pattern Tracking</span>
-                      </div>
-                    </button>
+                    <>
+                      <button
+                        className={`sub-menu-item ${isActive('/pattern-flow/pattern') ? 'active' : ''}`}
+                        onClick={() => handleNavigation('/pattern-flow/pattern')}
+                      >
+                        <div className="menu-item-left">
+                          <Cpu size={18} className="menu-icon-sub" />
+                          <span>Pattern Tracking</span>
+                        </div>
+                      </button>
+                      <button
+                        className={`sub-menu-item ${isActive('/pattern-flow/core-box') ? 'active' : ''}`}
+                        onClick={() => handleNavigation('/pattern-flow/core-box')}
+                      >
+                        <div className="menu-item-left">
+                          <Layers size={18} className="menu-icon-sub" />
+                          <span>Core Box Tracking</span>
+                        </div>
+                      </button>
+                    </>
                   )}
                 </div>
               </div>

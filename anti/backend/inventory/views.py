@@ -8,12 +8,12 @@ from django.db.models import Q
 from .models import (
     Supplier, RawMaterial, Customer, PatternMaterial, Product, CoreBox, Pattern,
     MaterialStock, MaterialStockCorrectionLog, ProductStock, ProductStockCorrectionLog,
-    PatternLog
+    PatternLog, CoreBoxLog
 )
 from .serializers import (
     SupplierSerializer, RawMaterialSerializer, CustomerSerializer, PatternMaterialSerializer, ProductSerializer, CoreBoxSerializer, PatternSerializer,
     MaterialStockSerializer, MaterialStockCorrectionLogSerializer, ProductStockSerializer, ProductStockCorrectionLogSerializer,
-    PatternLogSerializer
+    PatternLogSerializer, CoreBoxLogSerializer
 )
 from rest_framework.response import Response
 
@@ -264,6 +264,107 @@ class CoreBoxViewSet(viewsets.ModelViewSet):
                 qs = qs.filter(corebox_filter)
         return qs
 
+    @action(detail=True, methods=['post'])
+    def out_for_production(self, request, pk=None):
+        core_box = self.get_object()
+        
+        latest_prod = core_box.logs.filter(type_of_entry__in=['OUT_FOR_PRODUCTION', 'RETURN_FROM_PRODUCTION']).order_by('-date', '-id').first()
+        if latest_prod and latest_prod.type_of_entry == 'OUT_FOR_PRODUCTION':
+            raise ValidationError("Core box is already in production.")
+        
+        latest_insp = core_box.logs.filter(type_of_entry__in=['INSPECTION', 'INWARD']).order_by('-date', '-id').first()
+        if latest_insp:
+            from datetime import timedelta
+            if timezone.now() - latest_insp.date < timedelta(days=30):
+                raise ValidationError("Cannot send core box out for production; last inspection/inward date is less than 30 days ago.")
+        
+        description = request.data.get('description', 'Out for Production')
+        log = CoreBoxLog.objects.create(
+            core_box=core_box,
+            type_of_entry='OUT_FOR_PRODUCTION',
+            description=description,
+            date=timezone.now()
+        )
+        return Response(CoreBoxLogSerializer(log, context={'request': request}).data)
+
+    @action(detail=True, methods=['post'])
+    def return_from_production(self, request, pk=None):
+        core_box = self.get_object()
+        
+        latest_prod = core_box.logs.filter(type_of_entry__in=['OUT_FOR_PRODUCTION', 'RETURN_FROM_PRODUCTION']).order_by('-date', '-id').first()
+        if not latest_prod or latest_prod.type_of_entry != 'OUT_FOR_PRODUCTION':
+            raise ValidationError("Core box is not currently in production.")
+        
+        description = request.data.get('description', 'Return from Production')
+        log = CoreBoxLog.objects.create(
+            core_box=core_box,
+            type_of_entry='RETURN_FROM_PRODUCTION',
+            description=description,
+            date=timezone.now()
+        )
+        return Response(CoreBoxLogSerializer(log, context={'request': request}).data)
+
+    @action(detail=True, methods=['post'])
+    def create_entry(self, request, pk=None):
+        core_box = self.get_object()
+        type_of_entry = request.data.get('type_of_entry')
+        description = request.data.get('description')
+        photo = request.data.get('photo')
+        photos = request.data.get('photos', [])
+        
+        if not type_of_entry or type_of_entry not in ['INWARD', 'OUTWARD', 'INSPECTION']:
+            raise ValidationError("A valid type_of_entry (INWARD, OUTWARD, or INSPECTION) is required.")
+        
+        if not description:
+            raise ValidationError("description is required.")
+            
+        latest_prod = core_box.logs.filter(type_of_entry__in=['OUT_FOR_PRODUCTION', 'RETURN_FROM_PRODUCTION']).order_by('-date', '-id').first()
+        if latest_prod and latest_prod.type_of_entry == 'OUT_FOR_PRODUCTION':
+            raise ValidationError("Cannot perform entry while core box is in production.")
+            
+        latest_io = core_box.logs.filter(type_of_entry__in=['INWARD', 'OUTWARD']).order_by('-date', '-id').first()
+        
+        if type_of_entry in ['INWARD', 'OUTWARD']:
+            if latest_io:
+                if latest_io.type_of_entry == type_of_entry:
+                    raise ValidationError(f"Cannot add consecutive {type_of_entry.capitalize()} entries. The core box is already in that state.")
+        elif type_of_entry == 'INSPECTION':
+            if not latest_io or latest_io.type_of_entry == 'OUTWARD':
+                raise ValidationError("Cannot add inspection entry when the core box is currently Outward or has not been brought Inward.")
+                
+        uploaded_photos = []
+        if photo:
+            uploaded_photos = [photo] if isinstance(photo, str) else photo
+        elif photos:
+            uploaded_photos = photos
+            
+        if type_of_entry == 'INWARD':
+            if (not core_box.photos or len(core_box.photos) == 0) and uploaded_photos:
+                core_box.photos = uploaded_photos
+                core_box.save()
+
+        log = CoreBoxLog.objects.create(
+            core_box=core_box,
+            type_of_entry=type_of_entry,
+            description=description,
+            photos=uploaded_photos,
+            date=timezone.now()
+        )
+        return Response(CoreBoxLogSerializer(log, context={'request': request}).data)
+
+    @action(detail=True, methods=['get'])
+    def logs(self, request, pk=None):
+        core_box = self.get_object()
+        logs = core_box.logs.all().order_by('-date', '-id')
+        
+        page = self.paginate_queryset(logs)
+        if page is not None:
+            serializer = CoreBoxLogSerializer(page, many=True, context={'request': request})
+            return self.get_paginated_response(serializer.data)
+            
+        serializer = CoreBoxLogSerializer(logs, many=True, context={'request': request})
+        return Response(serializer.data)
+
 class PatternViewSet(viewsets.ModelViewSet):
     pagination_class = DynamicResultSetPagination
     queryset = Pattern.objects.all().order_by('-id')
@@ -329,12 +430,12 @@ class PatternViewSet(viewsets.ModelViewSet):
         if latest_prod and latest_prod.type_of_entry == 'OUT_FOR_PRODUCTION':
             raise ValidationError("Pattern is already in production.")
         
-        # Check validation: when inception date is less than one month it should throw 400
-        latest_inc = pattern.logs.filter(type_of_entry__in=['INCEPTION', 'INWARD']).order_by('-date', '-id').first()
-        if latest_inc:
+        # Check validation: when inspection date is less than one month it should throw 400
+        latest_insp = pattern.logs.filter(type_of_entry__in=['INSPECTION', 'INWARD']).order_by('-date', '-id').first()
+        if latest_insp:
             from datetime import timedelta
-            if timezone.now() - latest_inc.date < timedelta(days=30):
-                raise ValidationError("Cannot send pattern out for production; last inception/inward date is less than 30 days ago.")
+            if timezone.now() - latest_insp.date < timedelta(days=30):
+                raise ValidationError("Cannot send pattern out for production; last inspection/inward date is less than 30 days ago.")
         
         description = request.data.get('description', 'Out for Production')
         log = PatternLog.objects.create(
@@ -371,8 +472,8 @@ class PatternViewSet(viewsets.ModelViewSet):
         photo = request.data.get('photo')
         photos = request.data.get('photos', [])
         
-        if not type_of_entry or type_of_entry not in ['INWARD', 'OUTWARD', 'INCEPTION']:
-            raise ValidationError("A valid type_of_entry (INWARD, OUTWARD, or INCEPTION) is required.")
+        if not type_of_entry or type_of_entry not in ['INWARD', 'OUTWARD', 'INSPECTION']:
+            raise ValidationError("A valid type_of_entry (INWARD, OUTWARD, or INSPECTION) is required.")
         
         if not description:
             raise ValidationError("description is required.")
@@ -389,9 +490,9 @@ class PatternViewSet(viewsets.ModelViewSet):
             if latest_io:
                 if latest_io.type_of_entry == type_of_entry:
                     raise ValidationError(f"Cannot add consecutive {type_of_entry.capitalize()} entries. The pattern is already in that state.")
-        elif type_of_entry == 'INCEPTION':
-            if latest_io and latest_io.type_of_entry == 'OUTWARD':
-                raise ValidationError("Cannot add inception entry when the pattern is currently Outward.")
+        elif type_of_entry == 'INSPECTION':
+            if not latest_io or latest_io.type_of_entry == 'OUTWARD':
+                raise ValidationError("Cannot add inspection entry when the pattern is currently Outward or has not been brought Inward.")
                 
         # Resolve photo upload
         uploaded_photos = []
@@ -636,6 +737,52 @@ class PatternLogViewSet(viewsets.ModelViewSet):
         if search:
             qs = qs.filter(
                 Q(pattern__pattern_id__icontains=search) |
+                Q(description__icontains=search) |
+                Q(type_of_entry__icontains=search)
+            )
+        return qs
+
+    def update(self, request, *args, **kwargs):
+        if not request.user or not request.user.is_superuser:
+            raise ValidationError("Only admin/superuser accounts can edit the log entries.")
+        
+        instance = self.get_object()
+        date = request.data.get('date')
+        description = request.data.get('description')
+        
+        if not description:
+            raise ValidationError("Description is required.")
+            
+        if date:
+            instance.date = date
+        instance.description = description
+        instance.save()
+        return Response(self.get_serializer(instance).data)
+
+    def partial_update(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        if not request.user or not request.user.is_superuser:
+            raise ValidationError("Only admin/superuser accounts can delete log entries.")
+        return super().destroy(request, *args, **kwargs)
+
+
+class CoreBoxLogViewSet(viewsets.ModelViewSet):
+    pagination_class = DynamicResultSetPagination
+    queryset = CoreBoxLog.objects.all().order_by('-date', '-id')
+    serializer_class = CoreBoxLogSerializer
+
+    def get_queryset(self):
+        qs = CoreBoxLog.objects.all().order_by('-date', '-id')
+        core_box_id = self.request.query_params.get('core_box')
+        if core_box_id:
+            qs = qs.filter(core_box_id=core_box_id)
+            
+        search = self.request.query_params.get('search', '').strip()
+        if search:
+            qs = qs.filter(
+                Q(core_box__core_box_id__icontains=search) |
                 Q(description__icontains=search) |
                 Q(type_of_entry__icontains=search)
             )

@@ -16,7 +16,7 @@ interface Pattern {
     is_active: boolean;
     current_status: 'IN_PRODUCTION' | 'IN_STOCK';
     last_entry_type: 'INWARD' | 'OUTWARD' | null;
-    last_inception_date: string | null;
+    last_inspection_date: string | null;
     core_boxes_count: number;
     created_at?: string;
     created_by?: string;
@@ -30,7 +30,7 @@ interface PatternLog {
     pattern_code: string;
     customer_name: string;
     date: string;
-    type_of_entry: 'INWARD' | 'OUTWARD' | 'INCEPTION' | 'OUT_FOR_PRODUCTION' | 'RETURN_FROM_PRODUCTION';
+    type_of_entry: 'INWARD' | 'OUTWARD' | 'INSPECTION' | 'OUT_FOR_PRODUCTION' | 'RETURN_FROM_PRODUCTION';
     description: string;
     photos: string[];
     created_at?: string;
@@ -58,9 +58,9 @@ const PatternFlowTab: React.FC = () => {
     const [expandedPatternId, setExpandedPatternId] = useState<number | null>(null);
     
     // Entry Form state
-    const [entryType, setEntryType] = useState<'INCEPTION' | 'INWARD' | 'OUTWARD'>('INCEPTION');
+    const [entryType, setEntryType] = useState<'INSPECTION' | 'INWARD' | 'OUTWARD'>('INSPECTION');
     const [entryDescription, setEntryDescription] = useState('');
-    const [entryPhoto, setEntryPhoto] = useState<string>('');
+    const [entryPhotos, setEntryPhotos] = useState<string[]>([]);
     const [entryLoading, setEntryLoading] = useState(false);
 
     // Log History Modal state
@@ -159,17 +159,25 @@ const PatternFlowTab: React.FC = () => {
     };
 
     const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => {
-                setEntryPhoto(reader.result as string);
-            };
-            reader.onerror = (err) => {
-                console.error(err);
-                showToast('Failed to load photo', 'error');
-            };
+        if (e.target.files) {
+            const files = Array.from(e.target.files);
+            const readPromises = files.map(file => {
+                return new Promise<string>((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = () => resolve(reader.result as string);
+                    reader.onerror = (err) => reject(err);
+                });
+            });
+
+            Promise.all(readPromises)
+                .then(results => {
+                    setEntryPhotos(prev => [...prev, ...results]);
+                })
+                .catch(err => {
+                    console.error(err);
+                    showToast('Failed to load some photos', 'error');
+                });
         }
     };
 
@@ -177,8 +185,8 @@ const PatternFlowTab: React.FC = () => {
         e.preventDefault();
         if (!selectedPatternForEntry) return;
 
-        if (!entryPhoto) {
-            showToast('Photo upload is required.', 'error');
+        if (entryPhotos.length === 0) {
+            showToast('At least one photo upload is required.', 'error');
             return;
         }
 
@@ -192,13 +200,13 @@ const PatternFlowTab: React.FC = () => {
             await api.post(`/api/inventory/patterns/${selectedPatternForEntry.id}/create_entry/`, {
                 type_of_entry: entryType,
                 description: entryDescription,
-                photo: entryPhoto
+                photos: entryPhotos
             });
             showToast('Log entry created successfully', 'success');
             setSelectedPatternForEntry(null);
             setEntryDescription('');
-            setEntryPhoto('');
-            setEntryType('INCEPTION');
+            setEntryPhotos([]);
+            setEntryType('INSPECTION');
             fetchPatterns(page);
         } catch (err: any) {
             const msg = err.response?.data?.detail || err.response?.data?.non_field_errors || err.response?.data?.[0] || 'Validation failed';
@@ -272,7 +280,7 @@ const PatternFlowTab: React.FC = () => {
         switch(type) {
             case 'INWARD': return 'Inward';
             case 'OUTWARD': return 'Outward';
-            case 'INCEPTION': return 'Inception';
+            case 'INSPECTION': return 'Inspection';
             case 'OUT_FOR_PRODUCTION': return 'Out for Production';
             case 'RETURN_FROM_PRODUCTION': return 'Return from Production';
             default: return type;
@@ -283,7 +291,7 @@ const PatternFlowTab: React.FC = () => {
         switch(type) {
             case 'INWARD': return '#22c55e'; // Green
             case 'OUTWARD': return '#ef4444'; // Red
-            case 'INCEPTION': return '#3b82f6'; // Blue
+            case 'INSPECTION': return '#3b82f6'; // Blue
             case 'OUT_FOR_PRODUCTION': return '#eab308'; // Yellow
             case 'RETURN_FROM_PRODUCTION': return '#a855f7'; // Purple
             default: return 'white';
@@ -374,7 +382,7 @@ const PatternFlowTab: React.FC = () => {
                                 <th style={{ width: '120px' }}>Pattern ID</th>
                                 <th style={{ width: '150px' }}>Pattern Type</th>
                                 <th style={{ width: '150px', textAlign: 'center' }}>No. of Core Boxes</th>
-                                <th style={{ width: '180px' }}>Last Inception Date</th>
+                                <th style={{ width: '180px' }}>Last Inspection Date</th>
                                 <th style={{ width: '120px' }}>Pattern Photo</th>
                                 <th style={{ width: '140px' }}>Current Status</th>
                             </tr>
@@ -396,7 +404,7 @@ const PatternFlowTab: React.FC = () => {
                                             style={{ cursor: 'pointer', background: expandedPatternId === pat.id ? 'rgba(255, 107, 53, 0.08)' : 'transparent' }}
                                         >
                                             <td style={{ fontWeight: 500 }}>
-                                                {pat.customer_name === '***' ? '***' : `${pat.customer_code || ''} - ${pat.customer_name || ''}`}
+                                                {`${pat.customer_code || ''} - ${pat.customer_name || ''}`}
                                             </td>
                                             <td style={{ color: 'var(--color-molten-yellow)', fontWeight: 'bold' }}>
                                                 {pat.pattern_id}
@@ -408,7 +416,7 @@ const PatternFlowTab: React.FC = () => {
                                                 {pat.core_boxes_count}
                                             </td>
                                             <td>
-                                                {formatDateTime(pat.last_inception_date)}
+                                                {formatDateTime(pat.last_inspection_date)}
                                             </td>
                                             <td>
                                                 {pat.photos && pat.photos.length > 0 ? (
@@ -448,7 +456,7 @@ const PatternFlowTab: React.FC = () => {
                                                             <button 
                                                                 type="button" 
                                                                 onClick={() => handleOutForProduction(pat)} 
-                                                                disabled={pat.current_status === 'IN_PRODUCTION' || !pat.last_inception_date}
+                                                                disabled={pat.current_status === 'IN_PRODUCTION' || !pat.last_inspection_date}
                                                                 style={{
                                                                     background: 'linear-gradient(135deg, #ff6b35, #ff9f43)',
                                                                     border: 'none',
@@ -464,9 +472,9 @@ const PatternFlowTab: React.FC = () => {
                                                                     whiteSpace: 'nowrap',
                                                                     flexShrink: 0,
                                                                     margin: 0,
-                                                                    cursor: (pat.current_status === 'IN_PRODUCTION' || !pat.last_inception_date) ? 'not-allowed' : 'pointer',
-                                                                    opacity: (pat.current_status === 'IN_PRODUCTION' || !pat.last_inception_date) ? 0.4 : 1,
-                                                                    boxShadow: (pat.current_status === 'IN_PRODUCTION' || !pat.last_inception_date) ? 'none' : '0 2px 8px rgba(255, 107, 53, 0.3)',
+                                                                    cursor: (pat.current_status === 'IN_PRODUCTION' || !pat.last_inspection_date) ? 'not-allowed' : 'pointer',
+                                                                    opacity: (pat.current_status === 'IN_PRODUCTION' || !pat.last_inspection_date) ? 0.4 : 1,
+                                                                    boxShadow: (pat.current_status === 'IN_PRODUCTION' || !pat.last_inspection_date) ? 'none' : '0 2px 8px rgba(255, 107, 53, 0.3)',
                                                                     transition: 'all 0.2s'
                                                                 }}
                                                             >
@@ -614,7 +622,7 @@ const PatternFlowTab: React.FC = () => {
                                 <div>
                                     <span style={{ color: '#aaa' }}>Customer: </span>
                                     <span style={{ fontWeight: 500, color: '#fff' }}>
-                                        {pat.customer_name === '***' ? '***' : `${pat.customer_code || ''} - ${pat.customer_name || ''}`}
+                                        {`${pat.customer_code || ''} - ${pat.customer_name || ''}`}
                                     </span>
                                 </div>
                                 <div>
@@ -622,8 +630,8 @@ const PatternFlowTab: React.FC = () => {
                                     <span style={{ fontWeight: 500, color: '#fff' }}>{pat.core_boxes_count}</span>
                                 </div>
                                 <div>
-                                    <span style={{ color: '#aaa' }}>Last Inception: </span>
-                                    <span style={{ fontWeight: 500, color: '#fff' }}>{formatDateTime(pat.last_inception_date)}</span>
+                                    <span style={{ color: '#aaa' }}>Last Inspection: </span>
+                                    <span style={{ fontWeight: 500, color: '#fff' }}>{formatDateTime(pat.last_inspection_date)}</span>
                                 </div>
                             </div>
 
@@ -642,7 +650,7 @@ const PatternFlowTab: React.FC = () => {
                                 <button 
                                     type="button" 
                                     onClick={() => handleOutForProduction(pat)} 
-                                    disabled={pat.current_status === 'IN_PRODUCTION' || !pat.last_inception_date}
+                                    disabled={pat.current_status === 'IN_PRODUCTION' || !pat.last_inspection_date}
                                     style={{
                                         background: 'linear-gradient(135deg, #ff6b35, #ff9f43)',
                                         border: 'none',
@@ -658,8 +666,8 @@ const PatternFlowTab: React.FC = () => {
                                         whiteSpace: 'nowrap',
                                         flex: 1,
                                         margin: 0,
-                                        cursor: (pat.current_status === 'IN_PRODUCTION' || !pat.last_inception_date) ? 'not-allowed' : 'pointer',
-                                        opacity: (pat.current_status === 'IN_PRODUCTION' || !pat.last_inception_date) ? 0.4 : 1,
+                                        cursor: (pat.current_status === 'IN_PRODUCTION' || !pat.last_inspection_date) ? 'not-allowed' : 'pointer',
+                                        opacity: (pat.current_status === 'IN_PRODUCTION' || !pat.last_inspection_date) ? 0.4 : 1,
                                         transition: 'all 0.2s'
                                     }}
                                 >
@@ -816,7 +824,7 @@ const PatternFlowTab: React.FC = () => {
                                 </div>
                             ))}
                         </div>
-                        <button type="button" onClick={() => setSelectedPatternForPhoto(null)} className="btn-secondary" style={{ width: '100%', marginTop: '1rem', height: '36px', minHeight: 'auto', margin: '1rem 0 0 0' }}>
+                        <button type="button" onClick={() => setSelectedPatternForPhoto(null)} className="btn-secondary" style={{ width: '100%', marginTop: '1rem', height: '36px', minHeight: 'auto', margin: '1rem 0 0 0', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 1rem' }}>
                             Close
                         </button>
                     </div>
@@ -839,7 +847,7 @@ const PatternFlowTab: React.FC = () => {
                                 <label style={{ color: '#ccc', fontWeight: 600, fontSize: '0.85rem' }}>Entry Type <span style={{ color: 'var(--color-accent)' }}>*</span></label>
                                 <div style={{ display: 'flex', gap: '1.5rem', marginTop: '6px' }}>
                                     {[
-                                        { value: 'INCEPTION', label: 'Inception' },
+                                        { value: 'INSPECTION', label: 'Inspection' },
                                         { value: 'INWARD', label: 'Inward' },
                                         { value: 'OUTWARD', label: 'Outward' }
                                     ].map(item => (
@@ -860,7 +868,7 @@ const PatternFlowTab: React.FC = () => {
 
                             {/* Photo Upload */}
                             <div className="input-group">
-                                <label style={{ color: '#ccc', fontWeight: 600, fontSize: '0.85rem' }}>Upload Photo <span style={{ color: 'var(--color-accent)' }}>*</span></label>
+                                <label style={{ color: '#ccc', fontWeight: 600, fontSize: '0.85rem' }}>Upload Photos <span style={{ color: 'var(--color-accent)' }}>*</span></label>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '6px' }}>
                                     <input 
                                         type="file" 
@@ -868,26 +876,44 @@ const PatternFlowTab: React.FC = () => {
                                         id="entry-photo-upload" 
                                         onChange={handlePhotoUpload} 
                                         style={{ display: 'none' }} 
-                                        required
+                                        multiple
                                     />
                                     <label htmlFor="entry-photo-upload" style={{ 
                                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', 
                                         background: 'rgba(255,255,255,0.05)', border: '1px dashed rgba(255,255,255,0.2)', 
                                         borderRadius: '6px', padding: '8px 12px', cursor: 'pointer', margin: 0, color: '#fff', fontSize: '0.85rem', flex: 1
                                     }}>
-                                        <Upload size={14} /> Choose JPG Photo
+                                        <Upload size={14} /> Choose JPG Photos
                                     </label>
                                     
-                                    {entryPhoto && (
-                                        <button type="button" onClick={() => setEntryPhoto('')} className="btn-secondary" style={{ margin: 0, padding: '0 8px', minHeight: 'auto', height: '36px', fontSize: '0.8rem' }}>
-                                            Clear
+                                    {entryPhotos.length > 0 && (
+                                        <button type="button" onClick={() => setEntryPhotos([])} className="btn-secondary" style={{ margin: 0, padding: '0 8px', minHeight: 'auto', height: '36px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            Clear All
                                         </button>
                                     )}
                                 </div>
-                                {entryPhoto && (
-                                    <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <img src={entryPhoto} alt="Upload Preview" style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)' }} />
-                                        <span style={{ fontSize: '0.8rem', color: '#22c55e' }}>Photo selected</span>
+                                {entryPhotos.length > 0 && (
+                                    <div style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                        {entryPhotos.map((photo, idx) => (
+                                            <div key={idx} style={{ position: 'relative', width: '55px', height: '55px' }}>
+                                                <img src={photo} alt={`Preview ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)' }} />
+                                                <button 
+                                                    type="button" 
+                                                    onClick={() => setEntryPhotos(prev => prev.filter((_, i) => i !== idx))}
+                                                    style={{ 
+                                                        position: 'absolute', top: '-4px', right: '-4px', 
+                                                        width: '16px', height: '16px', borderRadius: '50%', 
+                                                        background: '#ef4444', color: 'white', border: 'none', 
+                                                        fontSize: '10px', display: 'flex', alignItems: 'center', 
+                                                        justifyContent: 'center', cursor: 'pointer', fontWeight: 'bold',
+                                                        boxShadow: '0 2px 4px rgba(0,0,0,0.5)'
+                                                    }}
+                                                    title="Remove photo"
+                                                >
+                                                    ×
+                                                </button>
+                                            </div>
+                                        ))}
                                     </div>
                                 )}
                             </div>
@@ -907,10 +933,10 @@ const PatternFlowTab: React.FC = () => {
                             </div>
 
                             <div style={{ display: 'flex', gap: '10px', marginTop: '1rem' }}>
-                                <button type="submit" disabled={entryLoading} className="btn-primary" style={{ margin: 0, flex: 1, height: '38px', minHeight: 'auto' }}>
+                                <button type="submit" disabled={entryLoading} className="btn-primary" style={{ margin: 0, flex: 1, height: '38px', minHeight: 'auto', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 1rem' }}>
                                     {entryLoading ? 'Submitting...' : 'Submit Entry'}
                                 </button>
-                                <button type="button" onClick={() => { setSelectedPatternForEntry(null); setEntryPhoto(''); setEntryDescription(''); }} className="btn-secondary" style={{ margin: 0, flex: 1, height: '38px', minHeight: 'auto' }}>
+                                <button type="button" onClick={() => { setSelectedPatternForEntry(null); setEntryPhotos([]); setEntryDescription(''); }} className="btn-secondary" style={{ margin: 0, flex: 1, height: '38px', minHeight: 'auto', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 1rem' }}>
                                     Cancel
                                 </button>
                             </div>
@@ -929,7 +955,7 @@ const PatternFlowTab: React.FC = () => {
                     <div className="glass-panel" style={{ width: '95%', maxWidth: '750px', maxHeight: '85vh', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '15px', border: '1px solid rgba(255,107,53,0.3)', overflow: 'hidden' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '8px' }}>
                             <h3 style={{ margin: 0, color: 'var(--color-molten-yellow)' }}>History Log ({logsPattern.pattern_id})</h3>
-                            <button type="button" onClick={() => setLogsPattern(null)} className="btn-secondary" style={{ margin: 0, padding: '4px 10px', height: '28px', minHeight: 'auto', width: 'auto' }}>
+                            <button type="button" onClick={() => setLogsPattern(null)} className="btn-secondary" style={{ margin: 0, padding: '0 10px', height: '28px', minHeight: 'auto', width: 'auto', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                                 Close
                             </button>
                         </div>
@@ -995,10 +1021,10 @@ const PatternFlowTab: React.FC = () => {
                                                         />
                                                     </div>
                                                     <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
-                                                        <button type="button" onClick={() => saveEditedLog(log)} disabled={editLogLoading} className="btn-primary" style={{ padding: '4px 10px', height: '26px', fontSize: '0.75rem', minHeight: 'auto', width: 'auto', margin: 0 }}>
+                                                        <button type="button" onClick={() => saveEditedLog(log)} disabled={editLogLoading} className="btn-primary" style={{ padding: '0 10px', height: '26px', fontSize: '0.75rem', minHeight: 'auto', width: 'auto', margin: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                                                             {editLogLoading ? 'Saving...' : 'Save'}
                                                         </button>
-                                                        <button type="button" onClick={cancelEditingLog} className="btn-secondary" style={{ padding: '4px 10px', height: '26px', fontSize: '0.75rem', minHeight: 'auto', width: 'auto', margin: 0 }}>
+                                                        <button type="button" onClick={cancelEditingLog} className="btn-secondary" style={{ padding: '0 10px', height: '26px', fontSize: '0.75rem', minHeight: 'auto', width: 'auto', margin: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                                                             Cancel
                                                         </button>
                                                     </div>
@@ -1010,11 +1036,19 @@ const PatternFlowTab: React.FC = () => {
                                             )}
 
                                             {log.photos && log.photos.length > 0 && (
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-                                                    <span style={{ fontSize: '0.8rem', color: '#aaa' }}>Log Photo:</span>
-                                                    <button type="button" onClick={() => setSelectedLogPhoto(log.photos[0])} className="action-icon-btn edit-btn" style={{ padding: '2px 8px', height: '22px', minHeight: 'auto', width: 'auto', display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: '0.75rem', margin: 0 }}>
-                                                        <ImageIcon size={12} /> View Upload
-                                                    </button>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '4px' }}>
+                                                    <span style={{ fontSize: '0.8rem', color: '#aaa' }}>Log Photos ({log.photos.length}):</span>
+                                                    {log.photos.map((ph, pIdx) => (
+                                                        <button 
+                                                            key={pIdx}
+                                                            type="button" 
+                                                            onClick={() => setSelectedLogPhoto(ph)} 
+                                                            className="action-icon-btn edit-btn" 
+                                                            style={{ padding: '2px 8px', height: '22px', minHeight: 'auto', width: 'auto', display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: '0.75rem', margin: 0 }}
+                                                        >
+                                                            <ImageIcon size={12} /> View Photo {pIdx + 1}
+                                                        </button>
+                                                    ))}
                                                 </div>
                                             )}
                                         </div>
@@ -1040,7 +1074,7 @@ const PatternFlowTab: React.FC = () => {
                             <a href={selectedLogPhoto} download="log_photo.jpg" className="btn-primary" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: 1, height: '36px', minHeight: 'auto', margin: 0 }}>
                                 Download Photo
                             </a>
-                            <button type="button" onClick={() => setSelectedLogPhoto(null)} className="btn-secondary" style={{ flex: 1, height: '36px', minHeight: 'auto', margin: 0 }}>
+                            <button type="button" onClick={() => setSelectedLogPhoto(null)} className="btn-secondary" style={{ flex: 1, height: '36px', minHeight: 'auto', margin: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 1rem' }}>
                                 Close
                             </button>
                         </div>
@@ -1078,7 +1112,7 @@ const PatternFlowTab: React.FC = () => {
                             type="button" 
                             className="btn-secondary" 
                             onClick={() => setSelectedPatternAudit(null)}
-                            style={{ marginTop: '1.5rem', width: '100%', height: '38px', minHeight: 'auto', margin: '1.5rem 0 0 0' }}
+                            style={{ marginTop: '1.5rem', width: '100%', height: '38px', minHeight: 'auto', margin: '1.5rem 0 0 0', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 1rem' }}
                         >
                             Close
                         </button>
@@ -1116,7 +1150,7 @@ const PatternFlowTab: React.FC = () => {
                             type="button" 
                             className="btn-secondary" 
                             onClick={() => setSelectedLogForAudit(null)}
-                            style={{ marginTop: '1.5rem', width: '100%', height: '38px', minHeight: 'auto', margin: '1.5rem 0 0 0' }}
+                            style={{ marginTop: '1.5rem', width: '100%', height: '38px', minHeight: 'auto', margin: '1.5rem 0 0 0', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 1rem' }}
                         >
                             Close
                         </button>

@@ -9,6 +9,9 @@ django.setup()
 from inventory.models import Supplier, RawMaterial, Customer, PatternMaterial, Product, CoreBox, Pattern
 from purchases.models import PurchaseInward, PurchaseInwardItem, PurchaseRejection, PurchaseRejectionItem, PurchaseReturn, PurchaseReturnItem
 
+def make_max_str(prefix, max_len):
+    return prefix + "A" * (max_len - len(prefix))
+
 def clean_and_seed_5():
     from core.middleware import tenant_state
     tenant_state.db = 'surya_castings'
@@ -45,24 +48,52 @@ def clean_and_seed_5():
     # 1. Suppliers
     suppliers = []
     for i in range(1, 6):
-        suppliers.append(Supplier(
-            supplier_id=f"SUP-{i:03d}",
-            name=f"Supplier Name {i:02d}",
-            code=f"SCODE-{i:03d}",
-            is_active=True
-        ))
+        if i == 1:
+            suppliers.append(Supplier(
+                supplier_id=make_max_str("SUP-", 15),
+                name=make_max_str("Supplier-", 100),
+                code=make_max_str("SCODE-", 15),
+                gst_number="33AAAAA1111A1Z1",
+                address_line1=make_max_str("Addr1-", 100),
+                address_line2=make_max_str("Addr2-", 100),
+                area=make_max_str("Area-", 50),
+                pincode="1234567890",
+                pan="ABCDE1234F",
+                is_active=True
+            ))
+        else:
+            suppliers.append(Supplier(
+                supplier_id=f"SUP-{i:03d}",
+                name=f"Supplier Name {i:02d}",
+                code=f"SCODE-{i:03d}",
+                is_active=True
+            ))
     Supplier.objects.using(db).bulk_create(suppliers)
     print("Seeded 5 Suppliers!")
 
     # 2. Customers
     customers = []
     for i in range(1, 6):
-        customers.append(Customer(
-            customer_id=f"CUST-{i:03d}",
-            name=f"Customer Name {i:02d}",
-            code=f"CCODE-{i:03d}",
-            is_active=True
-        ))
+        if i == 1:
+            customers.append(Customer(
+                customer_id=make_max_str("CUST-", 15),
+                name=make_max_str("Customer-", 100),
+                code=make_max_str("CCODE-", 15),
+                gst_number="33BBBBB1111B1Z2",
+                address_line1=make_max_str("Addr1-", 100),
+                address_line2=make_max_str("Addr2-", 100),
+                area=make_max_str("Area-", 50),
+                pincode="1234567890",
+                pan="FGHIJ5678K",
+                is_active=True
+            ))
+        else:
+            customers.append(Customer(
+                customer_id=f"CUST-{i:03d}",
+                name=f"Customer Name {i:02d}",
+                code=f"CCODE-{i:03d}",
+                is_active=True
+            ))
     Customer.objects.using(db).bulk_create(customers)
     print("Seeded 5 Customers!")
 
@@ -70,12 +101,19 @@ def clean_and_seed_5():
     pattern_materials = []
     materials_pool = ["Aluminum", "Wood", "Cast Iron", "Steel", "Plastic"]
     for i in range(1, 6):
-        mat_name = f"{materials_pool[(i-1) % len(materials_pool)]} Type {i:02d}"
-        pattern_materials.append(PatternMaterial(
-            material_id=f"MAT-{i:03d}",
-            name=mat_name,
-            is_active=True
-        ))
+        if i == 1:
+            pattern_materials.append(PatternMaterial(
+                material_id=make_max_str("MAT-", 15),
+                name=make_max_str("Material-", 100),
+                is_active=True
+            ))
+        else:
+            mat_name = f"{materials_pool[(i-1) % len(materials_pool)]} Type {i:02d}"
+            pattern_materials.append(PatternMaterial(
+                material_id=f"MAT-{i:03d}",
+                name=mat_name,
+                is_active=True
+            ))
     PatternMaterial.objects.using(db).bulk_create(pattern_materials)
     print("Seeded 5 Pattern Materials!")
 
@@ -88,12 +126,20 @@ def clean_and_seed_5():
     products = []
     for i in range(1, 6):
         cust = db_customers[(i-1) % len(db_customers)]
-        products.append(Product(
-            product_id=f"PROD-{i:03d}",
-            name=f"Product Item {i:02d}",
-            customer=cust,
-            is_active=True
-        ))
+        if i == 1:
+            products.append(Product(
+                product_id=make_max_str("PROD-", 15),
+                name=make_max_str("Product-", 100),
+                customer=cust,
+                is_active=True
+            ))
+        else:
+            products.append(Product(
+                product_id=f"PROD-{i:03d}",
+                name=f"Product Item {i:02d}",
+                customer=cust,
+                is_active=True
+            ))
     Product.objects.using(db).bulk_create(products)
     print("Seeded 5 Products!")
 
@@ -102,14 +148,24 @@ def clean_and_seed_5():
     units_pool = ["Nos", "Kg", "Litre", "Ton", "Piece"]
     depts_pool = ["Pattern", "Core", "Moulding", "Melting", "Pouring"]
     for i in range(1, 6):
-        raw_materials.append(RawMaterial(
-            code=f"RAW-{i:03d}",
-            name=f"Raw Material {i:02d}",
-            unit=units_pool[(i-1) % len(units_pool)],
-            category="RAW_MATERIAL" if i % 2 == 0 else "PRODUCTION",
-            departments=[depts_pool[(i-1) % len(depts_pool)]],
-            is_active=True
-        ))
+        if i == 1:
+            raw_materials.append(RawMaterial(
+                code=make_max_str("RAW-", 15),
+                name=make_max_str("RawMat-", 100),
+                unit="Square Meter",
+                category="PRODUCTION",
+                departments=["Pattern"],
+                is_active=True
+            ))
+        else:
+            raw_materials.append(RawMaterial(
+                code=f"RAW-{i:03d}",
+                name=f"Raw Material {i:02d}",
+                unit=units_pool[(i-1) % len(units_pool)],
+                category="RAW_MATERIAL" if i % 2 == 0 else "PRODUCTION",
+                departments=[depts_pool[(i-1) % len(depts_pool)]],
+                is_active=True
+            ))
     RawMaterial.objects.using(db).bulk_create(raw_materials)
     print("Seeded 5 Raw Materials!")
 
@@ -125,17 +181,30 @@ def clean_and_seed_5():
         bot_mat = db_materials[(i) % len(db_materials)]
         prod = db_products[(i-1) % len(db_products)]
         
-        core_boxes.append(CoreBox(
-            customer=cust,
-            core_box_id=f"CB-{i:03d}",
-            name=f"Core Box {i:02d}",
-            top_core_box=top_mat,
-            bottom_core_box=bot_mat,
-            core_box_type=types_pool[(i-1) % len(types_pool)],
-            products=[{"product_id": str(prod.id), "cavity": 2}],
-            description=f"Automated core box description {i:02d}",
-            is_active=True
-        ))
+        if i == 1:
+            core_boxes.append(CoreBox(
+                customer=cust,
+                core_box_id=make_max_str("CB-", 15),
+                name=make_max_str("CoreBox-", 100),
+                top_core_box=top_mat,
+                bottom_core_box=bot_mat,
+                core_box_type="CO2",
+                products=[{"product_id": str(prod.id), "cavity": 2}],
+                description=make_max_str("Desc-", 250),
+                is_active=True
+            ))
+        else:
+            core_boxes.append(CoreBox(
+                customer=cust,
+                core_box_id=f"CB-{i:03d}",
+                name=f"Core Box {i:02d}",
+                top_core_box=top_mat,
+                bottom_core_box=bot_mat,
+                core_box_type=types_pool[(i-1) % len(types_pool)],
+                products=[{"product_id": str(prod.id), "cavity": 2}],
+                description=f"Automated core box description {i:02d}",
+                is_active=True
+            ))
     CoreBox.objects.using(db).bulk_create(core_boxes)
     print("Seeded 5 Core Boxes!")
 
@@ -151,17 +220,30 @@ def clean_and_seed_5():
         prod = db_products[(i-1) % len(db_products)]
         cb = db_core_boxes[(i-1) % len(db_core_boxes)]
         
-        patterns.append(Pattern(
-            customer=cust,
-            pattern_id=f"PAT-{i:03d}",
-            top_plate=top_mat,
-            bottom_plate=bot_mat,
-            core_boxes=[cb.id],
-            products=[{"product_id": str(prod.id), "cavity": 4, "material_type_id": str(top_mat.id)}],
-            pattern_type=pattern_types_pool[(i-1) % len(pattern_types_pool)],
-            description=f"Automated pattern description {i:02d}",
-            is_active=True
-        ))
+        if i == 1:
+            patterns.append(Pattern(
+                customer=cust,
+                pattern_id=make_max_str("PAT-", 15),
+                top_plate=top_mat,
+                bottom_plate=bot_mat,
+                core_boxes=[cb.id],
+                products=[{"product_id": str(prod.id), "cavity": 4, "material_type_id": str(top_mat.id)}],
+                pattern_type="CO2",
+                description=make_max_str("Desc-", 250),
+                is_active=True
+            ))
+        else:
+            patterns.append(Pattern(
+                customer=cust,
+                pattern_id=f"PAT-{i:03d}",
+                top_plate=top_mat,
+                bottom_plate=bot_mat,
+                core_boxes=[cb.id],
+                products=[{"product_id": str(prod.id), "cavity": 4, "material_type_id": str(top_mat.id)}],
+                pattern_type=pattern_types_pool[(i-1) % len(pattern_types_pool)],
+                description=f"Automated pattern description {i:02d}",
+                is_active=True
+            ))
     Pattern.objects.using(db).bulk_create(patterns)
     print("Seeded 5 Patterns!")
 
@@ -172,15 +254,26 @@ def clean_and_seed_5():
     inward_statuses = ["COMPLETED", "COMPLETED", "COMPLETED", "DRAFT", "DRAFT"]
     for i in range(1, 6):
         supp = db_suppliers[(i-1) % len(db_suppliers)]
-        inwards.append(PurchaseInward(
-            inward_number=f"INW-{i:03d}",
-            supplier=supp,
-            inward_date=datetime.date(2026, 7, i),
-            bill_no=f"BILL-{i:03d}",
-            bill_date=datetime.date(2026, 7, i),
-            remarks=f"Inward receipt {i:02d}",
-            status=inward_statuses[i-1]
-        ))
+        if i == 1:
+            inwards.append(PurchaseInward(
+                inward_number=make_max_str("INW-", 20),
+                supplier=supp,
+                inward_date=datetime.date(2026, 7, i),
+                bill_no=make_max_str("BILL-", 20),
+                bill_date=datetime.date(2026, 7, i),
+                remarks=make_max_str("Remarks-", 250),
+                status="COMPLETED"
+            ))
+        else:
+            inwards.append(PurchaseInward(
+                inward_number=f"INW-{i:03d}",
+                supplier=supp,
+                inward_date=datetime.date(2026, 7, i),
+                bill_no=f"BILL-{i:03d}",
+                bill_date=datetime.date(2026, 7, i),
+                remarks=f"Inward receipt {i:02d}",
+                status=inward_statuses[i-1]
+            ))
     
     # We must save inwards one-by-one to generate PKs since we need them for InwardItems
     db_inwards = []
@@ -200,17 +293,30 @@ def clean_and_seed_5():
         cgst = (qty * rate) * (gst / 200.0)
         sgst = (qty * rate) * (gst / 200.0)
         
-        inward_items.append(PurchaseInwardItem(
-            purchase_inward=inw,
-            raw_material=mat,
-            quantity=qty,
-            rate=rate,
-            gst=gst,
-            cgst=cgst,
-            sgst=sgst,
-            batch=f"BATCH-{i+1:02d}",
-            expiry_date=datetime.date(2027, 7, i+1)
-        ))
+        if i == 0:
+            inward_items.append(PurchaseInwardItem(
+                purchase_inward=inw,
+                raw_material=mat,
+                quantity=qty,
+                rate=rate,
+                gst=gst,
+                cgst=cgst,
+                sgst=sgst,
+                batch=make_max_str("Batch-", 50),
+                expiry_date=datetime.date(2027, 7, i+1)
+            ))
+        else:
+            inward_items.append(PurchaseInwardItem(
+                purchase_inward=inw,
+                raw_material=mat,
+                quantity=qty,
+                rate=rate,
+                gst=gst,
+                cgst=cgst,
+                sgst=sgst,
+                batch=f"BATCH-{i+1:02d}",
+                expiry_date=datetime.date(2027, 7, i+1)
+            ))
     
     db_inward_items = []
     for item in inward_items:
@@ -226,12 +332,20 @@ def clean_and_seed_5():
     for i in range(1, 6):
         # Cycle through completed inwards
         inw = completed_inwards[(i-1) % len(completed_inwards)]
-        rejections.append(PurchaseRejection(
-            rejection_number=f"REJ-{i:03d}",
-            rejection_date=datetime.date(2026, 7, i + 5),
-            purchase_inward=inw,
-            remarks=f"QC Rejection {i:02d}"
-        ))
+        if i == 1:
+            rejections.append(PurchaseRejection(
+                rejection_number=make_max_str("REJ-", 20),
+                rejection_date=datetime.date(2026, 7, i + 5),
+                purchase_inward=inw,
+                remarks=make_max_str("Remarks-", 250)
+            ))
+        else:
+            rejections.append(PurchaseRejection(
+                rejection_number=f"REJ-{i:03d}",
+                rejection_date=datetime.date(2026, 7, i + 5),
+                purchase_inward=inw,
+                remarks=f"QC Rejection {i:02d}"
+            ))
         
     db_rejections = []
     for rej in rejections:
@@ -267,12 +381,20 @@ def clean_and_seed_5():
     returns = []
     for i in range(1, 6):
         inw = completed_inwards[(i-1) % len(completed_inwards)]
-        returns.append(PurchaseReturn(
-            return_number=f"RET-{i:03d}",
-            return_date=datetime.date(2026, 7, i + 10),
-            purchase_inward=inw,
-            remarks=f"Supplier Return {i:02d}"
-        ))
+        if i == 1:
+            returns.append(PurchaseReturn(
+                return_number=make_max_str("RET-", 20),
+                return_date=datetime.date(2026, 7, i + 10),
+                purchase_inward=inw,
+                remarks=make_max_str("Remarks-", 250)
+            ))
+        else:
+            returns.append(PurchaseReturn(
+                return_number=f"RET-{i:03d}",
+                return_date=datetime.date(2026, 7, i + 10),
+                purchase_inward=inw,
+                remarks=f"Supplier Return {i:02d}"
+            ))
         
     db_returns = []
     for ret in returns:
@@ -308,12 +430,20 @@ def clean_and_seed_5():
     from inventory.models import ProductStock
     product_stocks = []
     for idx, prod in enumerate(db_products):
-        product_stocks.append(ProductStock(
-            customer=prod.customer,
-            product=prod,
-            batch_no=f"B-PROD-{idx+1:03d}",
-            quantity=100.0 * (idx + 1)
-        ))
+        if idx == 0:
+            product_stocks.append(ProductStock(
+                customer=prod.customer,
+                product=prod,
+                batch_no=make_max_str("B-PROD-", 50),
+                quantity=100.0
+            ))
+        else:
+            product_stocks.append(ProductStock(
+                customer=prod.customer,
+                product=prod,
+                batch_no=f"B-PROD-{idx+1:03d}",
+                quantity=100.0 * (idx + 1)
+            ))
     for p_stock in product_stocks:
         p_stock.save(using=db)
     print("Seeded Product Stocks!")

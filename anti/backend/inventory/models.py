@@ -195,7 +195,7 @@ class PatternLog(BaseModel):
     ENTRY_TYPE_CHOICES = [
         ('INWARD', 'Inward'),
         ('OUTWARD', 'Outward'),
-        ('INCEPTION', 'Inception'),
+        ('INSPECTION', 'Inspection'),
         ('OUT_FOR_PRODUCTION', 'Out for Production'),
         ('RETURN_FROM_PRODUCTION', 'Return from Production'),
     ]
@@ -208,6 +208,25 @@ class PatternLog(BaseModel):
 
     def __str__(self):
         return f"PatternLog: {self.pattern.pattern_id} - {self.type_of_entry} on {self.date}"
+
+class CoreBoxLog(BaseModel):
+    ENTRY_TYPE_CHOICES = [
+        ('INWARD', 'Inward'),
+        ('OUTWARD', 'Outward'),
+        ('INSPECTION', 'Inspection'),
+        ('OUT_FOR_PRODUCTION', 'Out for Production'),
+        ('RETURN_FROM_PRODUCTION', 'Return from Production'),
+    ]
+
+    core_box = models.ForeignKey(CoreBox, on_delete=models.CASCADE, related_name='logs')
+    date = models.DateTimeField(default=timezone.now)
+    type_of_entry = models.CharField(max_length=50, choices=ENTRY_TYPE_CHOICES)
+    description = models.TextField()
+    photos = models.JSONField(default=list, blank=True)  # list of base64 strings
+
+    def __str__(self):
+        return f"CoreBoxLog: {self.core_box.core_box_id} - {self.type_of_entry} on {self.date}"
+
 
 
 

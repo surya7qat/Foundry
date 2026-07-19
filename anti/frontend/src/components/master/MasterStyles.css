@@ -105,13 +105,15 @@
     padding: 1.2rem 1rem;
     text-align: left;
     font-weight: 600;
-    white-space: nowrap;
+    white-space: normal;
+    word-break: break-word;
 }
 
 .glass-table td {
     padding: 1rem;
     border-bottom: 1px solid rgba(255,255,255,0.05);
-    white-space: nowrap;
+    white-space: normal;
+    word-break: break-all;
 }
 
 .glass-table tr:hover {
@@ -875,6 +877,7 @@ select.glass-input option:disabled {
     padding: 1.2rem;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     transition: all 0.3s ease;
+    word-break: break-all;
 }
 
 .mobile-card:hover {

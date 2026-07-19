@@ -273,10 +273,12 @@ class CoreBoxViewSet(viewsets.ModelViewSet):
             raise ValidationError("Core box is already in production.")
         
         latest_insp = core_box.logs.filter(type_of_entry__in=['INSPECTION', 'INWARD']).order_by('-date', '-id').first()
-        if latest_insp:
-            from datetime import timedelta
-            if timezone.now() - latest_insp.date < timedelta(days=30):
-                raise ValidationError("Cannot send core box out for production; last inspection/inward date is less than 30 days ago.")
+        if not latest_insp:
+            raise ValidationError("Cannot send core box out for production; no inspection/inward record found.")
+        
+        from datetime import timedelta
+        if timezone.now() - latest_insp.date > timedelta(days=30):
+            raise ValidationError("Cannot send core box out for production; last inspection/inward date is more than 30 days ago.")
         
         description = request.data.get('description', 'Out for Production')
         log = CoreBoxLog.objects.create(
@@ -430,12 +432,14 @@ class PatternViewSet(viewsets.ModelViewSet):
         if latest_prod and latest_prod.type_of_entry == 'OUT_FOR_PRODUCTION':
             raise ValidationError("Pattern is already in production.")
         
-        # Check validation: when inspection date is less than one month it should throw 400
+        # Check validation: when inspection date is more than one month it should throw 400
         latest_insp = pattern.logs.filter(type_of_entry__in=['INSPECTION', 'INWARD']).order_by('-date', '-id').first()
-        if latest_insp:
-            from datetime import timedelta
-            if timezone.now() - latest_insp.date < timedelta(days=30):
-                raise ValidationError("Cannot send pattern out for production; last inspection/inward date is less than 30 days ago.")
+        if not latest_insp:
+            raise ValidationError("Cannot send pattern out for production; no inspection/inward record found.")
+        
+        from datetime import timedelta
+        if timezone.now() - latest_insp.date > timedelta(days=30):
+            raise ValidationError("Cannot send pattern out for production; last inspection/inward date is more than 30 days ago.")
         
         description = request.data.get('description', 'Out for Production')
         log = PatternLog.objects.create(

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../../api';
-import { Search, ChevronLeft, ChevronRight, Image as ImageIcon, History, Edit2, Upload } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Image as ImageIcon, History, Edit2, Upload, Download } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
 import '../master/MasterStyles.css';
 
@@ -68,6 +68,7 @@ const CoreBoxFlowTab: React.FC = () => {
     const [coreBoxLogs, setCoreBoxLogs] = useState<CoreBoxLog[]>([]);
     const [logsLoading, setLogsLoading] = useState(false);
     const [selectedLogPhoto, setSelectedLogPhoto] = useState<string | null>(null);
+    const [selectedLogForAudit, setSelectedLogForAudit] = useState<CoreBoxLog | null>(null);
     
     // Inline Edit state for Log History
     const [editingLogId, setEditingLogId] = useState<number | null>(null);
@@ -162,7 +163,7 @@ const CoreBoxFlowTab: React.FC = () => {
         setLogsLoading(true);
         try {
             const res = await api.get(`/api/inventory/core-boxes/${cb.id}/logs/`);
-            setCoreBoxLogs(res.data || []);
+            setCoreBoxLogs(res.data.results || res.data || []);
             setLogsCoreBox(cb);
         } catch (err: any) {
             showToast('Failed to fetch logs', 'error');
@@ -366,19 +367,19 @@ const CoreBoxFlowTab: React.FC = () => {
                                                 onClick={() => setExpandedCoreBoxId(expandedCoreBoxId === cb.id ? null : cb.id)}
                                                 style={{ cursor: 'pointer', background: expandedCoreBoxId === cb.id ? 'rgba(255, 107, 53, 0.08)' : 'transparent' }}
                                             >
-                                                <td style={{ fontWeight: 500 }}>
+                                                <td style={{ fontWeight: 500 }} className="wrap-text">
                                                     {`${cb.customer_code || ''} - ${cb.customer_name || ''}`}
                                                 </td>
-                                                <td style={{ color: 'var(--color-molten-yellow)', fontWeight: 'bold' }}>
+                                                <td style={{ color: 'var(--color-molten-yellow)', fontWeight: 'bold' }} className="wrap-text">
                                                     {cb.core_box_id}
                                                 </td>
-                                                <td>
+                                                <td className="wrap-text">
                                                     {cb.name}
                                                 </td>
                                                 <td>
                                                     {cb.core_box_type}
                                                 </td>
-                                                <td style={{ color: '#aaa', fontWeight: 500 }}>
+                                                <td style={{ color: '#aaa', fontWeight: 500 }} className="wrap-text">
                                                     {cb.pattern_id || '-'}
                                                 </td>
                                                 <td>
@@ -576,7 +577,7 @@ const CoreBoxFlowTab: React.FC = () => {
                     coreBoxes.map(cb => (
                         <div key={cb.id} className="mobile-card" style={{ marginBottom: '12px', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                <span style={{ fontWeight: 'bold', color: 'var(--color-molten-yellow)' }}>{cb.core_box_id}</span>
+                                <span style={{ fontWeight: 'bold', color: 'var(--color-molten-yellow)', wordBreak: 'break-all' }}>{cb.core_box_id}</span>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                     <span style={{ 
                                         display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%',
@@ -592,11 +593,11 @@ const CoreBoxFlowTab: React.FC = () => {
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.85rem' }}>
                                 <div>
                                     <span style={{ color: '#aaa' }}>Core Box Name: </span>
-                                    <span style={{ fontWeight: 500, color: '#fff' }}>{cb.name}</span>
+                                    <span style={{ fontWeight: 500, color: '#fff', wordBreak: 'break-all' }}>{cb.name}</span>
                                 </div>
                                 <div>
                                     <span style={{ color: '#aaa' }}>Customer: </span>
-                                    <span style={{ fontWeight: 500, color: '#fff' }}>
+                                    <span style={{ fontWeight: 500, color: '#fff', wordBreak: 'break-all' }}>
                                         {`${cb.customer_code || ''} - ${cb.customer_name || ''}`}
                                     </span>
                                 </div>
@@ -606,7 +607,7 @@ const CoreBoxFlowTab: React.FC = () => {
                                 </div>
                                 <div>
                                     <span style={{ color: '#aaa' }}>Pattern: </span>
-                                    <span style={{ fontWeight: 500, color: '#fff' }}>{cb.pattern_id || '-'}</span>
+                                    <span style={{ fontWeight: 500, color: '#fff', wordBreak: 'break-all' }}>{cb.pattern_id || '-'}</span>
                                 </div>
                                 <div>
                                     <span style={{ color: '#aaa' }}>Last Inspection: </span>
@@ -792,10 +793,17 @@ const CoreBoxFlowTab: React.FC = () => {
                 }}>
                     <div className="glass-panel" style={{ width: '90%', maxWidth: '600px', padding: '1.5rem', border: '1px solid rgba(255,107,53,0.3)' }}>
                         <h3 style={{ margin: '0 0 1rem 0', color: 'var(--color-molten-yellow)' }}>Photos for {selectedCoreBoxForPhoto.core_box_id}</h3>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '12px', maxHeight: '400px', overflowY: 'auto', padding: '5px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '12px', maxHeight: '400px', overflowY: 'auto', padding: '5px' }}>
                             {selectedCoreBoxForPhoto.photos?.map((ph, idx) => (
-                                <div key={idx} style={{ position: 'relative', borderRadius: '6px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
-                                    <img src={ph} alt={`master-${idx}`} style={{ width: '100%', height: '100px', objectFit: 'cover', display: 'block' }} />
+                                <div key={idx} style={{ display: 'flex', flexDirection: 'column', borderRadius: '6px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.02)', padding: '6px' }}>
+                                    <img src={ph} alt={`master-${idx}`} style={{ width: '100%', height: '100px', objectFit: 'cover', borderRadius: '4px', display: 'block', marginBottom: '6px' }} />
+                                    <a 
+                                        href={ph} 
+                                        download={`corebox_${selectedCoreBoxForPhoto.core_box_id}_${idx + 1}.jpg`} 
+                                        style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px', fontSize: '0.75rem', color: 'var(--color-accent)', textDecoration: 'none', padding: '4px 0', borderTop: '1px solid rgba(255,255,255,0.05)', marginTop: 'auto' }}
+                                    >
+                                        <Download size={12} /> Download
+                                    </a>
                                 </div>
                             ))}
                         </div>
@@ -909,13 +917,13 @@ const CoreBoxFlowTab: React.FC = () => {
                             </div>
 
                             {/* Buttons */}
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '1.25rem' }}>
+                            <div style={{ display: 'flex', gap: '10px', marginTop: '1.25rem' }}>
                                 <button 
                                     type="button" 
                                     onClick={() => { setSelectedCoreBoxForEntry(null); setEntryPhotos([]); setEntryDescription(''); }} 
                                     className="btn-secondary"
                                     disabled={entryLoading}
-                                    style={{ padding: '0 1.25rem', height: '36px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                                    style={{ margin: 0, flex: 1, height: '38px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 1.25rem' }}
                                 >
                                     Cancel
                                 </button>
@@ -923,7 +931,7 @@ const CoreBoxFlowTab: React.FC = () => {
                                     type="submit" 
                                     className="btn-primary" 
                                     disabled={entryLoading}
-                                    style={{ padding: '0 1.25rem', height: '36px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                                    style={{ margin: 0, flex: 1, height: '38px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 1.25rem' }}
                                 >
                                     {entryLoading ? 'Saving...' : 'Save Entry'}
                                 </button>
@@ -953,17 +961,7 @@ const CoreBoxFlowTab: React.FC = () => {
                                     {coreBoxLogs.map(log => (
                                         <div key={log.id} style={{ padding: '12px', background: 'rgba(255,255,255,0.03)', borderLeft: `4px solid ${getEntryTypeColor(log.type_of_entry)}`, borderRadius: '0 6px 6px 0', position: 'relative' }}>
                                             
-                                            {/* Edit Button */}
-                                            {isSuperuser && editingLogId !== log.id && (
-                                                <button 
-                                                    type="button" 
-                                                    onClick={() => startEditingLog(log)}
-                                                    className="action-icon-btn edit-btn"
-                                                    style={{ position: 'absolute', top: '8px', right: '8px', padding: '4px 8px', height: '24px', fontSize: '0.75rem', width: 'auto', minHeight: 'auto', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                                                >
-                                                    <Edit2 size={12} /> Edit
-                                                </button>
-                                            )}
+
 
                                             {editingLogId === log.id ? (
                                                 <form onSubmit={(e) => handleEditLogSubmit(e, log.id)} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -989,32 +987,53 @@ const CoreBoxFlowTab: React.FC = () => {
                                                         />
                                                     </div>
                                                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}>
-                                                        <button type="button" onClick={() => setEditingLogId(null)} className="btn-secondary" style={{ padding: '4px 10px', height: '26px', fontSize: '0.75rem' }} disabled={editLogLoading}>Cancel</button>
-                                                        <button type="submit" className="btn-primary" style={{ padding: '4px 10px', height: '26px', fontSize: '0.75rem' }} disabled={editLogLoading}>
+                                                        <button type="button" onClick={() => setEditingLogId(null)} className="btn-secondary" style={{ margin: 0, width: 'auto', padding: '4px 10px', height: '26px', fontSize: '0.75rem' }} disabled={editLogLoading}>Cancel</button>
+                                                        <button type="submit" className="btn-primary" style={{ margin: 0, width: 'auto', padding: '4px 10px', height: '26px', fontSize: '0.75rem' }} disabled={editLogLoading}>
                                                             {editLogLoading ? 'Saving...' : 'Save'}
                                                         </button>
                                                     </div>
                                                 </form>
                                             ) : (
                                                 <>
-                                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', flexWrap: 'wrap', gap: '5px' }}>
-                                                        <span style={{ fontWeight: 'bold', color: getEntryTypeColor(log.type_of_entry), fontSize: '0.9rem' }}>
-                                                            {formatEntryTypeLabel(log.type_of_entry)}
-                                                        </span>
-                                                        <span style={{ fontSize: '0.8rem', color: '#aaa' }}>{formatDateTime(log.date)}</span>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '5px', marginBottom: '8px' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                            <span style={{ 
+                                                                fontSize: '0.85rem', fontWeight: 'bold', color: getEntryTypeColor(log.type_of_entry),
+                                                                background: `rgba(${log.type_of_entry === 'INWARD' ? '34,197,94' : log.type_of_entry === 'OUTWARD' ? '239,68,68' : log.type_of_entry === 'INSPECTION' ? '59,130,246' : '234,179,8'}, 0.1)`,
+                                                                padding: '2px 6px', borderRadius: '4px'
+                                                            }}>
+                                                                {formatEntryTypeLabel(log.type_of_entry)}
+                                                            </span>
+                                                            <span style={{ fontSize: '0.8rem', color: '#aaa' }}>
+                                                                {formatDateTime(log.date)}
+                                                            </span>
+                                                        </div>
+                                                        <div style={{ display: 'flex', gap: '6px' }}>
+                                                            {isSuperuser && editingLogId !== log.id && (
+                                                                <>
+                                                                    <button type="button" onClick={() => startEditingLog(log)} className="action-icon-btn edit-btn" style={{ padding: '2px 6px', height: '24px', minHeight: 'auto', width: 'auto', display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: '0.75rem', margin: 0 }}>
+                                                                        <Edit2 size={12} /> Edit
+                                                                    </button>
+                                                                    <button type="button" onClick={() => setSelectedLogForAudit(log)} className="action-icon-btn delete-btn" style={{ padding: '2px 6px', height: '24px', minHeight: 'auto', width: 'auto', display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: '0.75rem', margin: 0 }}>
+                                                                        <History size={12} /> Audit
+                                                                    </button>
+                                                                </>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                    <p style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#eee', whiteSpace: 'pre-wrap', paddingRight: '45px' }}>{log.description}</p>
+                                                    <p style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: '#eee', whiteSpace: 'pre-wrap' }}>{log.description}</p>
                                                     
                                                     {log.photos && log.photos.length > 0 && (
-                                                        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
-                                                            {log.photos.map((ph, index) => (
+                                                        <div style={{ marginTop: '8px', fontSize: '0.85rem', color: '#ccc' }}>
+                                                            <strong>Log Photos ({log.photos.length}):</strong>{' '}
+                                                            {log.photos.map((ph, idx) => (
                                                                 <button 
-                                                                    key={index} 
+                                                                    key={idx} 
                                                                     type="button" 
-                                                                    onClick={() => setSelectedLogPhoto(ph)}
-                                                                    style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer' }}
+                                                                    onClick={() => setSelectedLogPhoto(ph)} 
+                                                                    style={{ background: 'none', border: 'none', color: 'var(--color-accent)', textDecoration: 'underline', cursor: 'pointer', padding: 0, marginRight: '10px' }}
                                                                 >
-                                                                    <img src={ph} alt={`log-${index}`} style={{ width: '45px', height: '45px', objectFit: 'cover', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)' }} />
+                                                                    <ImageIcon size={12} style={{ display: 'inline', marginRight: '3px', verticalAlign: 'middle' }} /> View Photo {idx + 1}
                                                                 </button>
                                                             ))}
                                                         </div>
@@ -1048,16 +1067,26 @@ const CoreBoxFlowTab: React.FC = () => {
                     background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(3px)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 950
                 }}>
-                    <div style={{ position: 'relative', maxWidth: '90%', maxHeight: '90%' }}>
-                        <img src={selectedLogPhoto} alt="log-full" style={{ maxWidth: '100%', maxHeight: '80vh', objectFit: 'contain', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)' }} />
-                        <button 
-                            type="button" 
-                            onClick={() => setSelectedLogPhoto(null)} 
-                            className="btn-secondary"
-                            style={{ position: 'absolute', bottom: '-45px', right: '0', padding: '6px 16px', height: '32px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
-                        >
-                            Close Preview
-                        </button>
+                    <div style={{ position: 'relative', maxWidth: '90%', maxHeight: '90%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                        <img src={selectedLogPhoto} alt="log-full" style={{ maxWidth: '100%', maxHeight: '75vh', objectFit: 'contain', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)' }} />
+                        <div style={{ display: 'flex', gap: '10px', width: '100%', justifyContent: 'center', marginTop: '5px' }}>
+                            <a 
+                                href={selectedLogPhoto} 
+                                download="log_photo.jpg" 
+                                className="btn-primary" 
+                                style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', height: '32px', padding: '0 16px', fontSize: '0.85rem', width: 'auto', margin: 0 }}
+                            >
+                                <Download size={14} style={{ marginRight: '4px' }} /> Download
+                            </a>
+                            <button 
+                                type="button" 
+                                onClick={() => setSelectedLogPhoto(null)} 
+                                className="btn-secondary"
+                                style={{ padding: '0 16px', height: '32px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', margin: 0 }}
+                            >
+                                Close Preview
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
@@ -1103,6 +1132,44 @@ const CoreBoxFlowTab: React.FC = () => {
                                 Close
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal: Log Record Audit Log */}
+            {selectedLogForAudit && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000
+                }}>
+                    <div className="glass-panel" style={{ width: '90%', maxWidth: '400px', padding: '1.5rem', position: 'relative', border: '1px solid rgba(255,107,53,0.3)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
+                        <h3 style={{ margin: '0 0 1.25rem 0', color: 'var(--color-molten-yellow)', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '8px', fontSize: '1.1rem' }}>
+                            Log Entry Audit
+                        </h3>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.9rem', color: '#fff' }}>
+                            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                <div style={{ color: 'var(--color-accent)', fontWeight: 600, fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: '4px' }}>Created By</div>
+                                <div style={{ fontSize: '1rem', fontWeight: 500 }}>{selectedLogForAudit.created_by || 'System'}</div>
+                                <div style={{ color: '#aaa', fontSize: '0.8rem', marginTop: '2px' }}>{formatDateTime(selectedLogForAudit.created_at || null)}</div>
+                            </div>
+                            
+                            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                <div style={{ color: 'var(--color-accent)', fontWeight: 600, fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: '4px' }}>Last Edited By</div>
+                                <div style={{ fontSize: '1rem', fontWeight: 500 }}>{selectedLogForAudit.updated_by || 'System'}</div>
+                                <div style={{ color: '#aaa', fontSize: '0.8rem', marginTop: '2px' }}>{formatDateTime(selectedLogForAudit.updated_at || null)}</div>
+                            </div>
+                        </div>
+
+                        <button 
+                            type="button" 
+                            className="btn-secondary" 
+                            onClick={() => setSelectedLogForAudit(null)}
+                            style={{ marginTop: '1.5rem', width: '100%', height: '38px', minHeight: 'auto', margin: '1.5rem 0 0 0', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 1rem' }}
+                        >
+                            Close
+                        </button>
                     </div>
                 </div>
             )}

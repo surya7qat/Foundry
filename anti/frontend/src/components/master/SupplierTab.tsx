@@ -310,7 +310,7 @@ const SupplierTab: React.FC = () => {
                                         ) : suppliers.map(sup => (
                                             <tr key={sup.id} className={(editingId === sup.id ? 'editing-row ' : '') + (!sup.is_active ? 'inactive-row' : '')}>
                                                 <td style={{ fontWeight: '700', fontFamily: 'monospace', color: 'var(--color-molten-yellow)' }}>{sup.supplier_id}</td>
-                                                <td>
+                                                <td className="wrap-text">
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                         <span 
                                                             style={{ 

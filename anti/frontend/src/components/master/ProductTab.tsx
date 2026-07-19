@@ -301,7 +301,7 @@ const ProductTab: React.FC = () => {
                                         ) : products.map(prod => (
                                             <tr key={prod.id} className={(editingId === prod.id ? 'editing-row ' : '') + (!prod.is_active ? 'inactive-row' : '')}>
                                                 <td style={{ fontWeight: '700', fontFamily: 'monospace', color: 'var(--color-molten-yellow)' }}>{prod.product_id}</td>
-                                                <td>
+                                                <td className="wrap-text">
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                         <span 
                                                             style={{ 
@@ -318,7 +318,7 @@ const ProductTab: React.FC = () => {
                                                         <span style={{ fontWeight: '600', color: '#fff' }}>{prod.name}</span>
                                                     </div>
                                                 </td>
-                                                <td style={{ fontWeight: '600' }}>{prod.customer_name || '-'}</td>
+                                                <td style={{ fontWeight: '600' }} className="wrap-text">{prod.customer_name || '-'}</td>
                                                 <td>
                                                     <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center' }}>
                                                         <button className="action-icon-btn edit-btn" onClick={() => handleEdit(prod)} title="Edit Product">

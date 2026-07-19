@@ -297,7 +297,7 @@ const RawMaterialTab: React.FC = () => {
                                                         )}
                                                     </div>
                                                 </td>
-                                                <td>
+                                                <td className="wrap-text">
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                         <span 
                                                             style={{ 

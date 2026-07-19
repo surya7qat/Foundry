@@ -448,11 +448,11 @@ const PatternTab: React.FC = () => {
                                             <tr><td colSpan={8} style={{textAlign:'center', padding:'2rem'}}>No patterns recorded yet.</td></tr>
                                         ) : patterns.map(pat => (
                                             <tr key={pat.id} className={(editingId === pat.id ? 'editing-row ' : '') + (!pat.is_active ? 'inactive-row' : '')}>
-                                                <td>{pat.customer_name || '-'}</td>
-                                                <td style={{ fontWeight: '700', fontFamily: 'monospace', color: 'var(--color-molten-yellow)' }}>{pat.pattern_id}</td>
-                                                <td>{pat.top_plate_name || '-'}</td>
-                                                <td>{pat.bottom_plate_name || '-'}</td>
-                                                <td>
+                                                <td className="wrap-text">{pat.customer_name || '-'}</td>
+                                                <td style={{ fontWeight: '700', fontFamily: 'monospace', color: 'var(--color-molten-yellow)' }} className="wrap-text">{pat.pattern_id}</td>
+                                                <td className="wrap-text">{pat.top_plate_name || '-'}</td>
+                                                <td className="wrap-text">{pat.bottom_plate_name || '-'}</td>
+                                                <td className="wrap-text">
                                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                                         {pat.products?.map((p, idx) => (
                                                             <span key={idx} style={{ fontSize: '0.8rem', color: '#ccc' }}>
@@ -461,7 +461,7 @@ const PatternTab: React.FC = () => {
                                                         ))}
                                                     </div>
                                                 </td>
-                                                <td style={{ fontSize: '0.9rem' }}>
+                                                <td style={{ fontSize: '0.9rem' }} className="wrap-text">
                                                     {getCoreBoxNames(pat.core_boxes)}
                                                 </td>
                                                 <td>
@@ -521,18 +521,18 @@ const PatternTab: React.FC = () => {
                                 ) : patterns.map(pat => (
                                     <div className="mobile-card" key={pat.id}>
                                         <div className="mobile-card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                            <h3>Pattern {pat.pattern_id}</h3>
+                                            <h3 style={{ wordBreak: 'break-all' }}>Pattern {pat.pattern_id}</h3>
                                             <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: 600, color: pat.is_active ? '#4ade80' : '#f87171' }}>
                                                 <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: pat.is_active ? '#22c55e' : '#ef4444', boxShadow: pat.is_active ? '0 0 8px #22c55e' : '0 0 8px #ef4444' }}></span>
                                                 {pat.is_active ? 'Active' : 'Inactive'}
                                             </span>
                                         </div>
                                         <div className="mobile-card-body">
-                                            <p><strong>Customer</strong> <span>{pat.customer_name || '-'}</span></p>
-                                            <p><strong>Top Plate Mat.</strong> <span>{pat.top_plate_name || '-'}</span></p>
-                                            <p><strong>Bottom Plate Mat.</strong> <span>{pat.bottom_plate_name || '-'}</span></p>
+                                            <p><strong>Customer</strong> <span style={{ wordBreak: 'break-all' }}>{pat.customer_name || '-'}</span></p>
+                                            <p><strong>Top Plate Mat.</strong> <span style={{ wordBreak: 'break-all' }}>{pat.top_plate_name || '-'}</span></p>
+                                            <p><strong>Bottom Plate Mat.</strong> <span style={{ wordBreak: 'break-all' }}>{pat.bottom_plate_name || '-'}</span></p>
                                             <p><strong>Type</strong> <span>{pat.pattern_type}</span></p>
-                                            <p><strong>Core Boxes</strong> <span style={{ fontSize: '0.9rem' }}>{getCoreBoxNames(pat.core_boxes)}</span></p>
+                                            <p><strong>Core Boxes</strong> <span style={{ fontSize: '0.9rem', wordBreak: 'break-all' }}>{getCoreBoxNames(pat.core_boxes)}</span></p>
                                             <div className="mobile-card-chips" style={{ marginTop: '8px' }}>
                                                 <strong>Products & Cavities (Material)</strong>
                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>

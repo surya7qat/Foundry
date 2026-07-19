@@ -402,9 +402,9 @@ const PurchaseRejectionTab: React.FC = () => {
                                         <th>Rejection Number</th>
                                         <th>Rejection Date</th>
                                         <th>Inward Link</th>
-                                        <th>Supplier Name</th>
+                                        <th style={{ minWidth: '180px' }}>Supplier Name</th>
                                         <th>Total Rejection Value</th>
-                                        <th>Remarks</th>
+                                        <th style={{ minWidth: '200px' }}>Remarks</th>
                                         <th style={{textAlign: 'center', width: '120px'}}>Actions</th>
                                     </tr>
                                 </thead>
@@ -416,9 +416,9 @@ const PurchaseRejectionTab: React.FC = () => {
                                             <td style={{ fontWeight: '700', fontFamily: 'monospace', letterSpacing: '0.5px', color: '#ef4444' }} title={rej.rejection_number}>{rej.rejection_number}</td>
                                             <td style={{ fontFamily: 'monospace' }} title={rej.rejection_date}>{rej.rejection_date}</td>
                                             <td style={{ fontWeight: '600', fontFamily: 'monospace' }} title={rej.inward_number}>{rej.inward_number}</td>
-                                            <td style={{ fontWeight: '500' }} title={rej.supplier_name}>{rej.supplier_name}</td>
+                                            <td style={{ fontWeight: '500' }} className="wrap-text" title={rej.supplier_name}>{rej.supplier_name}</td>
                                             <td style={{ fontWeight: '700', fontFamily: 'monospace', color: '#fff' }} title={`₹ ${calculateTotal(rej.items).toFixed(2)}`}>₹ {calculateTotal(rej.items).toFixed(2)}</td>
-                                            <td style={{ color: '#ccc' }} title={rej.remarks}>{rej.remarks || '-'}</td>
+                                            <td style={{ color: '#ccc' }} className="wrap-text" title={rej.remarks}>{rej.remarks || '-'}</td>
                                             <td style={{textAlign: 'center'}}>
                                                 <div style={{display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center'}}>
                                                     <button className="action-icon-btn view-btn" onClick={() => { setViewingRejection(rej); setViewMode('view'); }} title="View Details">

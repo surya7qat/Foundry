@@ -105,14 +105,19 @@
     padding: 1.2rem 1rem;
     text-align: left;
     font-weight: 600;
-    white-space: nowrap;
+    white-space: nowrap !important;
 }
 
 .glass-table td {
     padding: 1rem;
     border-bottom: 1px solid rgba(255,255,255,0.05);
-    white-space: normal;
-    word-break: break-all;
+    white-space: nowrap !important;
+}
+
+.glass-table td.wrap-text, .wrap-text {
+    white-space: normal !important;
+    word-break: break-all !important;
+    overflow-wrap: break-word !important;
 }
 
 .glass-table tr:hover {

@@ -268,9 +268,9 @@ const MaterialStockTab: React.FC = () => {
                                 <tr><td colSpan={4} style={{ textAlign: 'center', padding: '2rem' }}>No stock records found.</td></tr>
                             ) : paginatedGrouped.map(st => (
                                 <tr key={st.raw_material_id} onClick={() => setSelectedGroup(st)} style={{ cursor: 'pointer' }} className="hover-row">
-                                    <td>
-                                        <div style={{ fontWeight: '600' }}>{st.raw_material_name}</div>
-                                        <div style={{ fontSize: '0.8rem', color: '#aaa', fontFamily: 'monospace' }}>{st.raw_material_code}</div>
+                                    <td className="wrap-text">
+                                        <div style={{ fontWeight: '600', wordBreak: 'break-all' }}>{st.raw_material_name}</div>
+                                        <div style={{ fontSize: '0.8rem', color: '#aaa', fontFamily: 'monospace', wordBreak: 'break-all' }}>{st.raw_material_code}</div>
                                     </td>
                                     <td style={{ textTransform: 'uppercase', fontSize: '0.85rem' }}>{st.material_category === 'RAW_MATERIAL' ? 'Raw Material' : 'Production'}</td>
                                     <td style={{ fontWeight: '700', fontFamily: 'monospace' }}>
@@ -308,8 +308,8 @@ const MaterialStockTab: React.FC = () => {
                     ) : paginatedGrouped.map(st => (
                         <div className="mobile-card hover-row" key={st.raw_material_id} onClick={() => setSelectedGroup(st)} style={{ cursor: 'pointer' }}>
                             <div className="mobile-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <h3>{st.raw_material_name}</h3>
-                                <span style={{ fontSize: '0.85rem', color: '#aaa' }}>{st.raw_material_code}</span>
+                                <h3 style={{ wordBreak: 'break-all' }}>{st.raw_material_name}</h3>
+                                <span style={{ fontSize: '0.85rem', color: '#aaa', wordBreak: 'break-all' }}>{st.raw_material_code}</span>
                             </div>
                             <div className="mobile-card-body">
                                 <p><strong>Type:</strong> <span style={{ textTransform: 'uppercase', fontSize: '0.85rem' }}>{st.material_category === 'RAW_MATERIAL' ? 'Raw Material' : 'Production'}</span></p>
@@ -350,10 +350,10 @@ const MaterialStockTab: React.FC = () => {
                     }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '8px', marginBottom: '1rem' }}>
                             <div>
-                                <h3 style={{ margin: 0, color: 'var(--color-molten-yellow)', fontSize: '1.3rem' }}>
+                                <h3 style={{ margin: 0, color: 'var(--color-molten-yellow)', fontSize: '1.3rem', wordBreak: 'break-all' }}>
                                     {selectedGroup.raw_material_name}
                                 </h3>
-                                <div style={{ fontSize: '0.85rem', color: '#aaa', fontFamily: 'monospace', marginTop: '2px' }}>
+                                <div style={{ fontSize: '0.85rem', color: '#aaa', fontFamily: 'monospace', marginTop: '2px', wordBreak: 'break-all' }}>
                                     Code: {selectedGroup.raw_material_code} | Type: {selectedGroup.material_category === 'RAW_MATERIAL' ? 'Raw Material' : 'Production'}
                                 </div>
                             </div>
@@ -375,7 +375,7 @@ const MaterialStockTab: React.FC = () => {
                                 <tbody>
                                     {selectedGroup.batches.map(b => (
                                         <tr key={b.id}>
-                                            <td style={{ fontFamily: 'monospace', color: 'var(--color-molten-yellow)' }}>{b.batch_no || '-'}</td>
+                                            <td style={{ fontFamily: 'monospace', color: 'var(--color-molten-yellow)' }} className="wrap-text">{b.batch_no || '-'}</td>
                                             <td>{b.expiry_date || '-'}</td>
                                             <td style={{ fontWeight: 'bold', fontFamily: 'monospace' }}>
                                                 {b.quantity.toFixed(2)} <span style={{ fontWeight: 'normal', color: '#ccc', fontSize: '0.8rem' }}>{selectedGroup.material_unit}</span>
@@ -417,10 +417,10 @@ const MaterialStockTab: React.FC = () => {
                         </div>
 
                         <form onSubmit={handleOpenConfirm} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)', fontSize: '0.85rem' }}>
-                                <div style={{ marginBottom: '4px' }}><strong>Material:</strong> {selectedStock.raw_material_name} ({selectedStock.raw_material_code})</div>
-                                <div style={{ marginBottom: '4px' }}><strong>Type:</strong> {selectedStock.material_category === 'RAW_MATERIAL' ? 'Raw Material' : 'Production'}</div>
-                                <div style={{ marginBottom: '4px' }}><strong>Batch No:</strong> <span style={{ fontFamily: 'monospace', color: 'var(--color-molten-yellow)' }}>{selectedStock.batch_no || '-'}</span></div>
+                            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)', fontSize: '0.85rem', wordBreak: 'break-all' }}>
+                                    <div style={{ marginBottom: '4px' }}><strong>Material:</strong> {selectedStock.raw_material_name} ({selectedStock.raw_material_code})</div>
+                                    <div style={{ marginBottom: '4px' }}><strong>Type:</strong> {selectedStock.material_category === 'RAW_MATERIAL' ? 'Raw Material' : 'Production'}</div>
+                                    <div style={{ marginBottom: '4px' }}><strong>Batch No:</strong> <span style={{ fontFamily: 'monospace', color: 'var(--color-molten-yellow)' }}>{selectedStock.batch_no || '-'}</span></div>
                                 <div style={{ marginBottom: '4px' }}><strong>Expiry:</strong> {selectedStock.expiry_date || '-'}</div>
                                 <div><strong>Current Quantity:</strong> <span style={{ fontWeight: '700' }}>{selectedStock.quantity.toFixed(2)} {selectedStock.material_unit}</span></div>
                             </div>
@@ -481,7 +481,7 @@ const MaterialStockTab: React.FC = () => {
                         <h3 style={{ margin: '0 0 1rem 0', color: '#ef4444', fontSize: '1.25rem' }}>
                             Are you absolutely sure?
                         </h3>
-                        <p style={{ fontSize: '0.9rem', color: '#ddd', lineHeight: '1.4', margin: '0 0 1.5rem 0' }}>
+                        <p style={{ fontSize: '0.9rem', color: '#ddd', lineHeight: '1.4', margin: '0 0 1.5rem 0', wordBreak: 'break-all' }}>
                             You are correcting the stock of <strong>{selectedStock.raw_material_name}</strong> (Batch: {selectedStock.batch_no || '-'}) from <strong>{selectedStock.quantity.toFixed(2)}</strong> to <strong>{Number(correctedQty).toFixed(2)}</strong>. This action will be permanently logged.
                         </p>
                         <div style={{ display: 'flex', gap: '10px' }}>

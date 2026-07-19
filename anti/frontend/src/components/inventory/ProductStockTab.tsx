@@ -342,13 +342,13 @@ const ProductStockTab: React.FC = () => {
                                 <tr><td colSpan={4} style={{ textAlign: 'center', padding: '2rem' }}>No stock records found.</td></tr>
                             ) : paginatedGrouped.map(st => (
                                 <tr key={st.product_id} onClick={() => setSelectedGroup(st)} style={{ cursor: 'pointer' }} className="hover-row">
-                                    <td>
-                                        <div style={{ fontWeight: '600' }}>{st.customer_name}</div>
-                                        <div style={{ fontSize: '0.8rem', color: '#aaa', fontFamily: 'monospace' }}>{st.customer_code}</div>
+                                    <td className="wrap-text">
+                                        <div style={{ fontWeight: '600', wordBreak: 'break-all' }}>{st.customer_name}</div>
+                                        <div style={{ fontSize: '0.8rem', color: '#aaa', fontFamily: 'monospace', wordBreak: 'break-all' }}>{st.customer_code}</div>
                                     </td>
-                                    <td>
-                                        <div style={{ fontWeight: '600' }}>{st.product_name}</div>
-                                        <div style={{ fontSize: '0.8rem', color: '#aaa', fontFamily: 'monospace' }}>{st.product_code}</div>
+                                    <td className="wrap-text">
+                                        <div style={{ fontWeight: '600', wordBreak: 'break-all' }}>{st.product_name}</div>
+                                        <div style={{ fontSize: '0.8rem', color: '#aaa', fontFamily: 'monospace', wordBreak: 'break-all' }}>{st.product_code}</div>
                                     </td>
                                     <td style={{ fontWeight: '700', fontFamily: 'monospace' }}>
                                         {st.total_quantity.toFixed(0)} <span style={{ fontSize: '0.8rem', color: '#aaa', fontWeight: 'normal' }}>Nos</span>
@@ -385,11 +385,11 @@ const ProductStockTab: React.FC = () => {
                     ) : paginatedGrouped.map(st => (
                         <div className="mobile-card hover-row" key={st.product_id} onClick={() => setSelectedGroup(st)} style={{ cursor: 'pointer' }}>
                             <div className="mobile-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <h3>{st.product_name}</h3>
-                                <span style={{ fontSize: '0.85rem', color: '#aaa' }}>{st.product_code}</span>
+                                <h3 style={{ wordBreak: 'break-all' }}>{st.product_name}</h3>
+                                <span style={{ fontSize: '0.85rem', color: '#aaa', wordBreak: 'break-all' }}>{st.product_code}</span>
                             </div>
                             <div className="mobile-card-body">
-                                <p><strong>Customer:</strong> <span>{st.customer_name} ({st.customer_code})</span></p>
+                                <p style={{ wordBreak: 'break-all' }}><strong>Customer:</strong> <span style={{ wordBreak: 'break-all' }}>{st.customer_name} ({st.customer_code})</span></p>
                                 <p><strong>Total Qty:</strong> <strong className="amount-highlight">{st.total_quantity.toFixed(0)} Nos</strong></p>
                             </div>
                             <div className="mobile-card-actions" style={{ justifyContent: 'flex-end' }}>
@@ -523,10 +523,10 @@ const ProductStockTab: React.FC = () => {
                     }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '8px', marginBottom: '1rem' }}>
                             <div>
-                                <h3 style={{ margin: 0, color: 'var(--color-molten-yellow)', fontSize: '1.3rem' }}>
+                                <h3 style={{ margin: 0, color: 'var(--color-molten-yellow)', fontSize: '1.3rem', wordBreak: 'break-all' }}>
                                     {selectedGroup.product_name}
                                 </h3>
-                                <div style={{ fontSize: '0.85rem', color: '#aaa', fontFamily: 'monospace', marginTop: '2px' }}>
+                                <div style={{ fontSize: '0.85rem', color: '#aaa', fontFamily: 'monospace', marginTop: '2px', wordBreak: 'break-all' }}>
                                     Product ID: {selectedGroup.product_code} | Customer: {selectedGroup.customer_name} ({selectedGroup.customer_code})
                                 </div>
                             </div>
@@ -547,7 +547,7 @@ const ProductStockTab: React.FC = () => {
                                 <tbody>
                                     {selectedGroup.batches.map(b => (
                                         <tr key={b.id}>
-                                            <td style={{ fontFamily: 'monospace', color: 'var(--color-molten-yellow)' }}>{b.batch_no}</td>
+                                            <td style={{ fontFamily: 'monospace', color: 'var(--color-molten-yellow)', wordBreak: 'break-all' }} className="wrap-text">{b.batch_no}</td>
                                             <td style={{ fontWeight: 'bold', fontFamily: 'monospace' }}>
                                                 {b.quantity.toFixed(0)} <span style={{ fontWeight: 'normal', color: '#ccc', fontSize: '0.8rem' }}>Nos</span>
                                             </td>
@@ -588,7 +588,7 @@ const ProductStockTab: React.FC = () => {
                         </div>
 
                         <form onSubmit={handleOpenConfirm} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)', fontSize: '0.85rem' }}>
+                            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)', fontSize: '0.85rem', wordBreak: 'break-all' }}>
                                 <div style={{ marginBottom: '4px' }}><strong>Customer:</strong> {selectedStock.customer_name} ({selectedStock.customer_code})</div>
                                 <div style={{ marginBottom: '4px' }}><strong>Product:</strong> {selectedStock.product_name} ({selectedStock.product_code})</div>
                                 <div style={{ marginBottom: '4px' }}><strong>Batch No:</strong> <span style={{ fontFamily: 'monospace', color: 'var(--color-molten-yellow)' }}>{selectedStock.batch_no}</span></div>
@@ -651,7 +651,7 @@ const ProductStockTab: React.FC = () => {
                         <h3 style={{ margin: '0 0 1rem 0', color: '#ef4444', fontSize: '1.25rem' }}>
                             Are you absolutely sure?
                         </h3>
-                        <p style={{ fontSize: '0.9rem', color: '#ddd', lineHeight: '1.4', margin: '0 0 1.5rem 0' }}>
+                        <p style={{ fontSize: '0.9rem', color: '#ddd', lineHeight: '1.4', margin: '0 0 1.5rem 0', wordBreak: 'break-all' }}>
                             You are correcting the stock of <strong>{selectedStock.product_name}</strong> (Batch: {selectedStock.batch_no}) from <strong>{selectedStock.quantity.toFixed(0)}</strong> to <strong>{Number(correctedQty).toFixed(0)}</strong>. This correction will be logged permanently.
                         </p>
                         <div style={{ display: 'flex', gap: '10px' }}>

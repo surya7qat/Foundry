@@ -309,7 +309,7 @@ const CustomerTab: React.FC = () => {
                                         ) : customers.map(cust => (
                                             <tr key={cust.id} className={(editingId === cust.id ? 'editing-row ' : '') + (!cust.is_active ? 'inactive-row' : '')}>
                                                 <td style={{ fontWeight: '700', fontFamily: 'monospace', color: 'var(--color-molten-yellow)' }}>{cust.customer_id}</td>
-                                                <td>
+                                                <td className="wrap-text">
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                         <span 
                                                             style={{ 

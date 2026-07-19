@@ -403,7 +403,7 @@ const PatternFlowTab: React.FC = () => {
                                             onClick={() => setExpandedPatternId(expandedPatternId === pat.id ? null : pat.id)}
                                             style={{ cursor: 'pointer', background: expandedPatternId === pat.id ? 'rgba(255, 107, 53, 0.08)' : 'transparent' }}
                                         >
-                                            <td style={{ fontWeight: 500 }}>
+                                            <td style={{ fontWeight: 500 }} className="wrap-text">
                                                 {`${pat.customer_code || ''} - ${pat.customer_name || ''}`}
                                             </td>
                                             <td style={{ color: 'var(--color-molten-yellow)', fontWeight: 'bold' }}>

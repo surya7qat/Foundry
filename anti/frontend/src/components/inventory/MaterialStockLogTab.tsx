@@ -184,17 +184,17 @@ const MaterialStockLogTab: React.FC = () => {
                                             <span>{formatDateTime(l.created_at)}</span>
                                         </div>
                                     </td>
-                                    <td>
-                                        <div style={{ fontWeight: '600' }}>{l.raw_material_name}</div>
-                                        <div style={{ fontSize: '0.8rem', color: 'var(--color-molten-yellow)', fontFamily: 'monospace' }}>Batch: {l.batch_no || '-'}</div>
+                                    <td className="wrap-text">
+                                        <div style={{ fontWeight: '600', wordBreak: 'break-all' }}>{l.raw_material_name}</div>
+                                        <div style={{ fontSize: '0.8rem', color: 'var(--color-molten-yellow)', fontFamily: 'monospace', wordBreak: 'break-all' }}>Batch: {l.batch_no || '-'}</div>
                                     </td>
-                                    <td style={{ fontFamily: 'monospace' }}>{l.quantity.toFixed(2)} {l.material_unit}</td>
-                                    <td style={{ fontFamily: 'monospace', fontWeight: '700', color: 'var(--color-glow-green)' }}>{l.corrected_quantity.toFixed(2)} {l.material_unit}</td>
-                                    <td style={{ maxWidth: '200px', whiteSpace: 'normal', fontSize: '0.9rem' }}>{l.reason}</td>
-                                    <td>
+                                    <td style={{ fontFamily: 'monospace' }} className="wrap-text">{l.quantity.toFixed(2)} {l.material_unit}</td>
+                                    <td style={{ fontFamily: 'monospace', fontWeight: '700', color: 'var(--color-glow-green)' }} className="wrap-text">{l.corrected_quantity.toFixed(2)} {l.material_unit}</td>
+                                    <td className="wrap-text" style={{ maxWidth: '200px', whiteSpace: 'normal', fontSize: '0.9rem', wordBreak: 'break-all' }}>{l.reason}</td>
+                                    <td className="wrap-text">
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                            <User size={14} style={{ color: '#aaa' }} />
-                                            <span>{l.created_by}</span>
+                                            <User size={14} style={{ color: '#aaa', flexShrink: 0 }} />
+                                            <span style={{ wordBreak: 'break-all' }}>{l.created_by}</span>
                                         </div>
                                     </td>
                                 </tr>
@@ -224,11 +224,11 @@ const MaterialStockLogTab: React.FC = () => {
                     ) : logs.map(l => (
                         <div className="mobile-card" key={l.id} style={{ borderLeft: '3px solid var(--color-molten-yellow)' }}>
                             <div className="mobile-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <h3>{l.raw_material_name}</h3>
+                                <h3 style={{ wordBreak: 'break-all' }}>{l.raw_material_name}</h3>
                                 <span style={{ fontSize: '0.8rem', color: '#aaa' }}>{formatDateTime(l.created_at)}</span>
                             </div>
                             <div className="mobile-card-body">
-                                <p><strong>Batch:</strong> <span style={{ fontFamily: 'monospace' }}>{l.batch_no || '-'}</span></p>
+                                <p><strong>Batch:</strong> <span style={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>{l.batch_no || '-'}</span></p>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', background: 'rgba(255,255,255,0.02)', padding: '8px', borderRadius: '4px', margin: '8px 0', border: '1px solid rgba(255,255,255,0.05)' }}>
                                     <div>
                                         <div style={{ fontSize: '0.75rem', color: '#aaa' }}>Original Qty</div>
@@ -239,9 +239,9 @@ const MaterialStockLogTab: React.FC = () => {
                                         <div style={{ fontFamily: 'monospace', fontWeight: 'bold', color: 'var(--color-glow-green)' }}>{l.corrected_quantity.toFixed(2)} {l.material_unit}</div>
                                     </div>
                                 </div>
-                                <p><strong>Reason:</strong> <span style={{ color: '#ddd' }}>{l.reason}</span></p>
+                                <p><strong>Reason:</strong> <span style={{ color: '#ddd', wordBreak: 'break-all' }}>{l.reason}</span></p>
                                 <p style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.85rem', color: '#aaa', marginTop: '6px' }}>
-                                    <User size={14} /> Corrected by: <strong>{l.created_by}</strong>
+                                    <User size={14} style={{ flexShrink: 0 }} /> Corrected by: <strong style={{ wordBreak: 'break-all' }}>{l.created_by}</strong>
                                 </p>
                             </div>
                         </div>

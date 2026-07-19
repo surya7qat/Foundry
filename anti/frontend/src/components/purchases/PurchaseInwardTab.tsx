@@ -429,12 +429,12 @@ const PurchaseInwardTab: React.FC = () => {
                                     <tr>
                                         <th>Inward Number</th>
                                         <th>Inward Date</th>
-                                        <th>Supplier</th>
+                                        <th style={{ minWidth: '180px' }}>Supplier</th>
                                         <th>Bill Number</th>
                                         <th>Bill Date</th>
                                         <th>Total Value (₹)</th>
                                         <th>Status</th>
-                                        <th>Remarks</th>
+                                        <th style={{ minWidth: '200px' }}>Remarks</th>
                                         <th style={{textAlign: 'center', width: '120px'}}>Actions</th>
                                     </tr>
                                 </thead>
@@ -445,7 +445,7 @@ const PurchaseInwardTab: React.FC = () => {
                                         <tr key={inward.id}>
                                             <td style={{ fontWeight: '700', fontFamily: 'monospace', letterSpacing: '0.5px', color: 'var(--color-molten-yellow)' }} title={inward.inward_number}>{inward.inward_number}</td>
                                             <td style={{ fontFamily: 'monospace' }} title={inward.inward_date}>{inward.inward_date}</td>
-                                            <td style={{ fontWeight: '500' }} title={inward.supplier_name}>{inward.supplier_name}</td>
+                                            <td style={{ fontWeight: '500' }} className="wrap-text" title={inward.supplier_name}>{inward.supplier_name}</td>
                                             <td style={{ fontWeight: '500' }} title={inward.bill_no}>{inward.bill_no}</td>
                                             <td style={{ fontFamily: 'monospace' }} title={inward.bill_date}>{inward.bill_date}</td>
                                             <td style={{ fontWeight: '700', fontFamily: 'monospace', color: '#fff' }} title={`₹ ${calculateTotal(inward.items).toFixed(2)}`}>₹ {calculateTotal(inward.items).toFixed(2)}</td>
@@ -464,7 +464,7 @@ const PurchaseInwardTab: React.FC = () => {
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td style={{ color: '#ccc' }} title={inward.remarks}>{inward.remarks}</td>
+                                            <td style={{ color: '#ccc' }} className="wrap-text" title={inward.remarks}>{inward.remarks}</td>
                                             <td style={{textAlign: 'center'}}>
                                                 <div style={{display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center'}}>
                                                     <button className="action-icon-btn view-btn" onClick={() => { setViewingInward(inward); setViewMode('view'); }} title="View Details">

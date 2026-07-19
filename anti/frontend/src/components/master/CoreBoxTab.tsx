@@ -422,9 +422,9 @@ const CoreBoxTab: React.FC = () => {
                                             <tr><td colSpan={8} style={{textAlign:'center', padding:'2rem'}}>No Core Boxes recorded yet.</td></tr>
                                         ) : coreBoxes.map(cb => (
                                             <tr key={cb.id} className={(editingId === cb.id ? 'editing-row ' : '') + (!cb.is_active ? 'inactive-row' : '')}>
-                                                <td>{cb.customer_name || '-'}</td>
-                                                <td style={{ fontWeight: '700', fontFamily: 'monospace', color: 'var(--color-molten-yellow)' }}>{cb.core_box_id}</td>
-                                                <td>
+                                                <td className="wrap-text">{cb.customer_name || '-'}</td>
+                                                <td style={{ fontWeight: '700', fontFamily: 'monospace', color: 'var(--color-molten-yellow)' }} className="wrap-text">{cb.core_box_id}</td>
+                                                <td className="wrap-text">
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                         <span 
                                                             style={{ 
@@ -438,13 +438,13 @@ const CoreBoxTab: React.FC = () => {
                                                             }} 
                                                             title={cb.is_active ? 'Active' : 'Inactive'}
                                                         />
-                                                        <span style={{ fontWeight: '600', color: '#fff' }}>{cb.name}</span>
+                                                        <span style={{ fontWeight: '600', color: '#fff', wordBreak: 'break-all' }}>{cb.name}</span>
                                                     </div>
                                                 </td>
-                                                <td>{cb.top_core_box_name || '-'}</td>
-                                                <td>{cb.bottom_core_box_name || '-'}</td>
+                                                <td className="wrap-text">{cb.top_core_box_name || '-'}</td>
+                                                <td className="wrap-text">{cb.bottom_core_box_name || '-'}</td>
                                                 <td style={{ textTransform: 'uppercase', fontFamily: 'monospace' }}>{cb.core_box_type}</td>
-                                                <td>
+                                                <td className="wrap-text">
                                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                                         {cb.products?.map((p, idx) => (
                                                             <span key={idx} style={{ fontSize: '0.8rem', color: '#ccc' }}>
@@ -491,17 +491,17 @@ const CoreBoxTab: React.FC = () => {
                                 ) : coreBoxes.map(cb => (
                                     <div className="mobile-card" key={cb.id}>
                                         <div className="mobile-card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                            <h3>{cb.name}</h3>
+                                            <h3 style={{ wordBreak: 'break-all' }}>{cb.name}</h3>
                                             <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: 600, color: cb.is_active ? '#4ade80' : '#f87171' }}>
                                                 <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: cb.is_active ? '#22c55e' : '#ef4444', boxShadow: cb.is_active ? '0 0 8px #22c55e' : '0 0 8px #ef4444' }}></span>
                                                 {cb.is_active ? 'Active' : 'Inactive'}
                                             </span>
                                         </div>
                                         <div className="mobile-card-body">
-                                            <p><strong>Customer</strong> <span>{cb.customer_name || '-'}</span></p>
-                                            <p><strong>Core Box ID</strong> <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{cb.core_box_id}</span></p>
-                                            <p><strong>Top Box Mat.</strong> <span>{cb.top_core_box_name || '-'}</span></p>
-                                            <p><strong>Bottom Box Mat.</strong> <span>{cb.bottom_core_box_name || '-'}</span></p>
+                                            <p><strong>Customer</strong> <span style={{ wordBreak: 'break-all' }}>{cb.customer_name || '-'}</span></p>
+                                            <p><strong>Core Box ID</strong> <span style={{ fontFamily: 'monospace', fontWeight: 600, wordBreak: 'break-all' }}>{cb.core_box_id}</span></p>
+                                            <p><strong>Top Box Mat.</strong> <span style={{ wordBreak: 'break-all' }}>{cb.top_core_box_name || '-'}</span></p>
+                                            <p><strong>Bottom Box Mat.</strong> <span style={{ wordBreak: 'break-all' }}>{cb.bottom_core_box_name || '-'}</span></p>
                                             <p><strong>Type</strong> <span>{cb.core_box_type}</span></p>
                                             <div className="mobile-card-chips" style={{ marginTop: '8px' }}>
                                                 <strong>Products & Cavities</strong>

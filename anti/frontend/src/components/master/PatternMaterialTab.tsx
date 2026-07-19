@@ -260,8 +260,8 @@ const PatternMaterialTab: React.FC = () => {
                                             <tr><td colSpan={3} style={{textAlign:'center', padding:'2rem'}}>No pattern materials found.</td></tr>
                                         ) : materials.map(mat => (
                                             <tr key={mat.id} className={(editingId === mat.id ? 'editing-row ' : '') + (!mat.is_active ? 'inactive-row' : '')}>
-                                                <td style={{ fontWeight: '700', fontFamily: 'monospace', color: 'var(--color-molten-yellow)' }}>{mat.material_id}</td>
-                                                <td>
+                                                <td style={{ fontWeight: '700', fontFamily: 'monospace', color: 'var(--color-molten-yellow)' }} className="wrap-text">{mat.material_id}</td>
+                                                <td className="wrap-text">
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                         <span 
                                                             style={{ 
@@ -275,7 +275,7 @@ const PatternMaterialTab: React.FC = () => {
                                                             }} 
                                                             title={mat.is_active ? 'Active' : 'Inactive'}
                                                         />
-                                                        <span style={{ fontWeight: '600', color: '#fff' }}>{mat.name}</span>
+                                                        <span style={{ fontWeight: '600', color: '#fff', wordBreak: 'break-all' }}>{mat.name}</span>
                                                     </div>
                                                 </td>
                                                  <td>
@@ -316,14 +316,14 @@ const PatternMaterialTab: React.FC = () => {
                                 ) : materials.map(mat => (
                                     <div className="mobile-card" key={mat.id}>
                                         <div className="mobile-card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                            <h3>{mat.name}</h3>
+                                            <h3 style={{ wordBreak: 'break-all' }}>{mat.name}</h3>
                                             <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: 600, color: mat.is_active ? '#4ade80' : '#f87171' }}>
                                                 <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: mat.is_active ? '#22c55e' : '#ef4444', boxShadow: mat.is_active ? '0 0 8px #22c55e' : '0 0 8px #ef4444' }}></span>
                                                 {mat.is_active ? 'Active' : 'Inactive'}
                                             </span>
                                         </div>
                                         <div className="mobile-card-body">
-                                            <p><strong>Material ID</strong> <span className="monospace-text" style={{ color: 'var(--color-molten-yellow)' }}>{mat.material_id}</span></p>
+                                            <p><strong>Material ID</strong> <span className="monospace-text" style={{ color: 'var(--color-molten-yellow)', wordBreak: 'break-all' }}>{mat.material_id}</span></p>
                                         </div>
                                         <div className="mobile-card-actions">
                                             <button className="action-icon-btn edit-btn" onClick={() => handleEdit(mat)} title="Edit Material">

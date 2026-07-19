@@ -120,6 +120,7 @@ class CoreBox(BaseModel):
     products = models.JSONField(default=list, blank=True)  # list of {product_id: int, cavity: int}
     core_box_type = models.CharField(max_length=20, choices=CORE_BOX_TYPE_CHOICES, default='CO2')
     total_weight = models.FloatField(default=0.0)
+    raw_materials = models.JSONField(default=list, blank=True)
     photos = models.JSONField(default=list, blank=True)  # list of base64 strings
     description = models.CharField(max_length=250, blank=True)
 
